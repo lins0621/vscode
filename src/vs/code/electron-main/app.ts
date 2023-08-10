@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { app, BrowserWindow, dialog, protocol, session, Session, systemPreferences, WebFrameMain } from 'electron';
+import { app, dialog, protocol, session, Session, systemPreferences, WebFrameMain } from 'electron';
 import { addUNCHostToAllowlist, disableUNCAccessRestrictions } from 'vs/base/node/unc';
 import { validatedIpcMain } from 'vs/base/parts/ipc/electron-main/ipcMain';
 import { hostname, release } from 'os';
@@ -204,22 +204,22 @@ export class CodeApplication extends Disposable {
 			return details.resourceType === 'xhr' || isSafeFrame(details.frame);
 		};
 
-		const isAllowedVsCodeFileRequest = (details: Electron.OnBeforeRequestListenerDetails) => {
-			const frame = details.frame;
-			if (!frame || !this.windowsMainService) {
-				return false;
-			}
+		// const isAllowedVsCodeFileRequest = (details: Electron.OnBeforeRequestListenerDetails) => {
+		// 	const frame = details.frame;
+		// 	if (!frame || !this.windowsMainService) {
+		// 		return false;
+		// 	}
 
-			// Check to see if the request comes from one of the main windows (or shared process) and not from embedded content
-			const windows = BrowserWindow.getAllWindows();
-			for (const window of windows) {
-				if (frame.processId === window.webContents.mainFrame.processId) {
-					return true;
-				}
-			}
+		// 	// Check to see if the request comes from one of the main windows (or shared process) and not from embedded content
+		// 	const windows = BrowserWindow.getAllWindows();
+		// 	for (const window of windows) {
+		// 		if (frame.processId === window.webContents.mainFrame.processId) {
+		// 			return true;
+		// 		}
+		// 	}
 
-			return false;
-		};
+		// 	return false;
+		// };
 
 		const isAllowedWebviewRequest = (uri: URI, details: Electron.OnBeforeRequestListenerDetails): boolean => {
 			if (uri.path !== '/index.html') {
@@ -234,7 +234,7 @@ export class CodeApplication extends Disposable {
 			// Check to see if the request comes from one of the main editor windows.
 			for (const window of this.windowsMainService.getWindows()) {
 				if (window.win) {
-					if (frame.processId === window.win.webContents.mainFrame.processId) {
+					if (frame.processId === window.getWTWebContents().mainFrame.processId) {
 						return true;
 					}
 				}
@@ -252,12 +252,12 @@ export class CodeApplication extends Disposable {
 				}
 			}
 
-			if (uri.scheme === Schemas.vscodeFileResource) {
-				if (!isAllowedVsCodeFileRequest(details)) {
-					this.logService.error('Blocked vscode-file request', details.url);
-					return callback({ cancel: true });
-				}
-			}
+			// if (uri.scheme === Schemas.vscodeFileResource) {
+			// 	if (!isAllowedVsCodeFileRequest(details)) {
+			// 		this.logService.error('Blocked vscode-file request', details.url);
+			// 		return callback({ cancel: true });
+			// 	}
+			// }
 
 			// Block most svgs
 			if (uri.path.endsWith('.svg')) {
@@ -370,11 +370,11 @@ export class CodeApplication extends Disposable {
 		//
 		app.on('web-contents-created', (event, contents) => {
 
-			contents.on('will-navigate', event => {
-				this.logService.error('webContents#will-navigate: Prevented webcontent navigation');
+			// contents.on('will-navigate', event => {
+			// 	this.logService.error('webContents#will-navigate: Prevented webcontent navigation');
 
-				event.preventDefault();
-			});
+			// 	event.preventDefault();
+			// });
 
 			contents.setWindowOpenHandler(({ url }) => {
 				this.nativeHostMainService?.openExternal(undefined, url);

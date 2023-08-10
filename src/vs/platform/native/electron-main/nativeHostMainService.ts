@@ -715,7 +715,7 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 
 	async resolveProxy(windowId: number | undefined, url: string): Promise<string | undefined> {
 		const window = this.windowById(windowId);
-		const session = window?.win?.webContents?.session;
+		const session = window?.getWTWebContents()?.session;
 
 		return session?.resolveProxy(url);
 	}
@@ -732,14 +732,14 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 	async openDevTools(windowId: number | undefined, options?: OpenDevToolsOptions): Promise<void> {
 		const window = this.windowById(windowId);
 		if (window?.win) {
-			window.win.webContents.openDevTools(options);
+			window.getWTWebContents().openDevTools(options);
 		}
 	}
 
 	async toggleDevTools(windowId: number | undefined): Promise<void> {
 		const window = this.windowById(windowId);
 		if (window?.win) {
-			const contents = window.win.webContents;
+			const contents = window.getWTWebContents();
 			contents.toggleDevTools();
 		}
 	}
@@ -747,7 +747,7 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 	async sendInputEvent(windowId: number | undefined, event: MouseInputEvent): Promise<void> {
 		const window = this.windowById(windowId);
 		if (window?.win && (event.type === 'mouseDown' || event.type === 'mouseUp')) {
-			window.win.webContents.sendInputEvent(event);
+			window.getWTWebContents().sendInputEvent(event);
 		}
 	}
 
