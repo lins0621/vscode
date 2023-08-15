@@ -123,6 +123,7 @@ import { ElectronPtyHostStarter } from 'vs/platform/terminal/electron-main/elect
 import { PtyHostService } from 'vs/platform/terminal/node/ptyHostService';
 import { NODE_REMOTE_RESOURCE_CHANNEL_NAME, NODE_REMOTE_RESOURCE_IPC_METHOD_NAME, NodeRemoteResourceResponse, NodeRemoteResourceRouter } from 'vs/platform/remote/common/electronRemoteResources';
 import { Lazy } from 'vs/base/common/lazy';
+import { ILCService, LCService } from 'vs/platform/lc/electron-main/LCService';
 
 /**
  * The main VS Code application. There will only ever be one instance,
@@ -569,6 +570,9 @@ export class CodeApplication extends Disposable {
 		// Transient profiles handler
 		this._register(appInstantiationService.createInstance(UserDataProfilesHandler));
 
+		// initLCService
+		appInstantiationService.invokeFunction(accessor => this.initLCService(accessor, mainProcessElectronServer));
+
 		// Init Channels
 		appInstantiationService.invokeFunction(accessor => this.initChannels(accessor, mainProcessElectronServer, sharedProcessClient));
 
@@ -961,6 +965,9 @@ export class CodeApplication extends Disposable {
 		services.set(IStorageMainService, new SyncDescriptor(StorageMainService));
 		services.set(IApplicationStorageMainService, new SyncDescriptor(ApplicationStorageMainService));
 
+		// lcService
+		services.set(ILCService, new SyncDescriptor(LCService));
+
 		// Terminal
 		const ptyHostStarter = new ElectronPtyHostStarter({
 			graceTime: LocalReconnectConstants.GraceTime,
@@ -1144,6 +1151,10 @@ export class CodeApplication extends Disposable {
 		// Utility Process Worker
 		const utilityProcessWorkerChannel = ProxyChannel.fromService(accessor.get(IUtilityProcessWorkerMainService));
 		mainProcessElectronServer.registerChannel(ipcUtilityProcessWorkerChannelName, utilityProcessWorkerChannel);
+	}
+
+	initLCService(accessor: ServicesAccessor, mainProcessElectronServer: ElectronIPCServer) {
+		accessor.get(ILCService).initService(accessor.get(INativeHostMainService), mainProcessElectronServer);
 	}
 
 	private async openFirstWindow(accessor: ServicesAccessor, initialProtocolUrls: IInitialProtocolUrls | undefined): Promise<ICodeWindow[]> {

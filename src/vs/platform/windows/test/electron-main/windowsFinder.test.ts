@@ -33,6 +33,9 @@ suite('WindowsFinder', () => {
 
 	function createTestCodeWindow(options: { lastFocusTime: number; openedFolderUri?: URI; openedWorkspace?: IWorkspaceIdentifier }): ICodeWindow {
 		return new class implements ICodeWindow {
+			getWTWebContents(): Electron.WebContents {
+				throw new Error('Method not implemented.');
+			}
 			profile?: IUserDataProfile | undefined;
 			showCodeWork(): void {
 				throw new Error('Method not implemented.');

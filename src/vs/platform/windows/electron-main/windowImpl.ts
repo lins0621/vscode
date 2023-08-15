@@ -44,7 +44,7 @@ import { IStateService } from 'vs/platform/state/node/state';
 import { IUserDataProfilesMainService } from 'vs/platform/userDataProfile/electron-main/userDataProfile';
 import { ILoggerMainService } from 'vs/platform/log/electron-main/loggerService';
 import { firstOrDefault } from 'vs/base/common/arrays';
-import { LCWindow } from 'vs/platform/windows/electron-main/lcwindowImpl';
+import { ILCService } from 'vs/platform/lc/electron-main/LCService';
 
 export interface IWindowCreationOptions {
 	readonly state: IWindowState;
@@ -103,8 +103,6 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 	private readonly _onDidDestroy = this._register(new Emitter<void>());
 	readonly onDidDestroy = this._onDidDestroy.event;
-
-	private mlcwindow: LCWindow;
 
 	//#endregion
 
@@ -195,7 +193,8 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		@IProductService private readonly productService: IProductService,
 		@IProtocolMainService private readonly protocolMainService: IProtocolMainService,
 		@IWindowsMainService private readonly windowsMainService: IWindowsMainService,
-		@IStateService private readonly stateService: IStateService
+		@IStateService private readonly stateService: IStateService,
+		@ILCService private readonly lcService: ILCService,
 	) {
 		super();
 
@@ -303,7 +302,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 			const codeWin = new BrowserView(options);
 			// Load URL
 			this._win.loadURL('https://lc.yinhaiyun.com/lcfront');
-			this.mlcwindow = new LCWindow(this._win, codeWin, this.windowState, this.environmentMainService);
+			this.lcService.bindWindow(this._win, codeWin, this.windowState, this.environmentMainService);
 			this._id = this._win.id;
 
 			if (isMacintosh && useCustomTitleStyle) {
@@ -523,11 +522,11 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 	}
 
 	getWTWebContents(): Electron.WebContents {
-		return this.mlcwindow.getWebContents();
+		return this.lcService.getWebContents();
 	}
 
 	private registerListeners(): void {
-		this.mlcwindow.registerListeners();
+		this.lcService.registerListeners();
 		// Window error conditions to handle
 		this._win.on('unresponsive', () => this.onWindowError(WindowError.UNRESPONSIVE));
 		this.getWTWebContents().on('render-process-gone', (event, details) => this.onWindowError(WindowError.PROCESS_GONE, { ...details }));

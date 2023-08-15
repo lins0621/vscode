@@ -59,6 +59,9 @@ export class TestSharedProcessService implements ISharedProcessService {
 }
 
 export class TestNativeHostService implements INativeHostService {
+	doOpenPicked(openable: IWindowOpenable[], options: INativeOpenDialogOptions): Promise<void> {
+		throw new Error('Method not implemented.');
+	}
 	declare readonly _serviceBrand: undefined;
 
 	readonly windowId = -1;
