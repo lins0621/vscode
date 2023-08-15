@@ -24,7 +24,6 @@ import { IUpdateService, StateType } from 'vs/platform/update/common/update';
 import { getTitleBarStyle, INativeRunActionInWindowRequest, INativeRunKeybindingInWindowRequest, IWindowOpenable } from 'vs/platform/window/common/window';
 import { IWindowsCountChangedEvent, IWindowsMainService, OpenContext } from 'vs/platform/windows/electron-main/windows';
 import { IWorkspacesHistoryMainService } from 'vs/platform/workspaces/electron-main/workspacesHistoryMainService';
-
 const telemetryFrom = 'menu';
 
 interface IMenuItemClickHandler {
@@ -63,6 +62,8 @@ export class Menubar {
 
 	private readonly fallbackMenuHandlers: { [id: string]: (menuItem: MenuItem, browserWindow: BrowserWindow | undefined, event: KeyboardEvent) => void } = Object.create(null);
 
+	private isShowVsMenu: boolean = true;
+
 	constructor(
 		@IUpdateService private readonly updateService: IUpdateService,
 		@IConfigurationService private readonly configurationService: IConfigurationService,
@@ -93,9 +94,6 @@ export class Menubar {
 		this.noActiveWindow = false;
 
 		this.oldMenus = [];
-
-		this.install();
-
 		this.registerListeners();
 	}
 
@@ -244,6 +242,17 @@ export class Menubar {
 		this.scheduleUpdateMenu();
 	}
 
+	public showVSMenu(): void {
+		this.isShowVsMenu = true;
+		this.doUpdateMenu();
+	}
+
+	public dismissMenu(): void {
+		this.isShowVsMenu = false;
+		Menu.setApplicationMenu(isMacintosh ? new Menu() : null);
+		this.setShowMenu(null);
+	}
+
 	private install(): void {
 		// Store old menu in our array to avoid GC to collect the menu and crash. See #55347
 		// TODO@sbatten Remove this when fixed upstream by Electron
@@ -255,7 +264,7 @@ export class Menubar {
 		// If we don't have a menu yet, set it to null to avoid the electron menu.
 		// This should only happen on the first launch ever
 		if (Object.keys(this.menubarMenus).length === 0) {
-			Menu.setApplicationMenu(isMacintosh ? new Menu() : null);
+			this.setShowMenu(isMacintosh ? new Menu() : null);
 			return;
 		}
 
@@ -358,9 +367,9 @@ export class Menubar {
 		}
 
 		if (menubar.items && menubar.items.length > 0) {
-			Menu.setApplicationMenu(menubar);
+			this.setShowMenu(menubar);
 		} else {
-			Menu.setApplicationMenu(null);
+			this.setShowMenu(null);
 		}
 
 		// Dispose of older menus after some time
@@ -828,6 +837,12 @@ export class Menubar {
 
 	private mnemonicLabel(label: string): string {
 		return mnemonicMenuLabel(label, !this.currentEnableMenuBarMnemonics);
+	}
+
+	private setShowMenu(menubar: Electron.Menu | null): void {
+		if (this.isShowVsMenu) {
+			Menu.setApplicationMenu(menubar);
+		}
 	}
 }
 

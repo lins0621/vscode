@@ -108,6 +108,8 @@ export interface ICommonNativeHostService {
 	pickFolderAndOpen(options: INativeOpenDialogOptions): Promise<void>;
 	pickWorkspaceAndOpen(options: INativeOpenDialogOptions): Promise<void>;
 
+	doOpenPicked(openable: IWindowOpenable[], options: INativeOpenDialogOptions): Promise<void>;
+
 	// OS
 	showItemInFolder(path: string): Promise<void>;
 	setRepresentedFilename(path: string): Promise<void>;

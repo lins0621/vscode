@@ -13,6 +13,8 @@ export const IMenubarMainService = createDecorator<IMenubarMainService>('menubar
 
 export interface IMenubarMainService extends ICommonMenubarService {
 	readonly _serviceBrand: undefined;
+	showVSMenu(): void;
+	dismissMenu(): void;
 }
 
 export class MenubarMainService implements IMenubarMainService {
@@ -27,6 +29,16 @@ export class MenubarMainService implements IMenubarMainService {
 		@ILogService private readonly logService: ILogService
 	) {
 		this.menubar = this.installMenuBarAfterWindowOpen();
+	}
+	showVSMenu(): void {
+		this.menubar.then(menubar => {
+			menubar.showVSMenu();
+		});
+	}
+	dismissMenu(): void {
+		this.menubar.then(menubar => {
+			menubar.dismissMenu();
+		});
 	}
 
 	private async installMenuBarAfterWindowOpen(): Promise<Menubar> {
