@@ -124,6 +124,7 @@ import { PtyHostService } from 'vs/platform/terminal/node/ptyHostService';
 import { NODE_REMOTE_RESOURCE_CHANNEL_NAME, NODE_REMOTE_RESOURCE_IPC_METHOD_NAME, NodeRemoteResourceResponse, NodeRemoteResourceRouter } from 'vs/platform/remote/common/electronRemoteResources';
 import { Lazy } from 'vs/base/common/lazy';
 import { ILCService, LCService } from 'vs/platform/lc/electron-main/LCService';
+import { LCChannel } from 'vs/platform/lc/common/LCIpc';
 
 /**
  * The main VS Code application. There will only ever be one instance,
@@ -1097,6 +1098,10 @@ export class CodeApplication extends Disposable {
 		const nativeHostChannel = ProxyChannel.fromService(this.nativeHostMainService);
 		mainProcessElectronServer.registerChannel('nativeHost', nativeHostChannel);
 		sharedProcessClient.then(client => client.registerChannel('nativeHost', nativeHostChannel));
+
+		// lc
+		const lcServiceChannel = new LCChannel(accessor.get(ILCService));
+		mainProcessElectronServer.registerChannel('lc', lcServiceChannel);
 
 		// Workspaces
 		const workspacesChannel = ProxyChannel.fromService(accessor.get(IWorkspacesService));
