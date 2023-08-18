@@ -11,9 +11,10 @@ import { INativeHostMainService } from 'vs/platform/native/electron-main/nativeH
 import { Server as ElectronIPCServer } from 'vs/base/parts/ipc/electron-main/ipc.electron';
 import { URI } from 'vs/base/common/uri';
 import { IMenubarMainService } from 'vs/platform/menubar/electron-main/menubarMainService';
+import { ICommonNativeLCService } from 'vs/platform/lc/common/ILC';
 export const ILCService = createDecorator<ILCService>('lcService');
 
-export interface ILCService {
+export interface ILCService extends ICommonNativeLCService {
 	// 添加这个，会使createInstance不报错
 	readonly _serviceBrand: undefined;
 	bindWindow(homeBW: BrowserWindow, workBV: BrowserView, windowState: IWindowState, environmentMainService: IEnvironmentMainService): void;
@@ -22,9 +23,6 @@ export interface ILCService {
 	showVSMenu(): void;
 
 	dismissVSMenuAndShowMyMenu(): void;
-	dissmissCodeWork(): void;
-	showCodeWork(): void;
-
 	getWebContents(): Electron.WebContents;
 	initService(mINativeHostMainService: INativeHostMainService, mainProcessElectronServer: ElectronIPCServer): void;
 }
