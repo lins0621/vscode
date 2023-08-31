@@ -249,7 +249,7 @@ export class Menubar {
 
 	public dismissMenu(): void {
 		this.isShowVsMenu = false;
-		Menu.setApplicationMenu(isMacintosh ? new Menu() : null);
+		// Menu.setApplicationMenu(isMacintosh ? new Menu() : null);
 		this.setShowMenu(null);
 	}
 

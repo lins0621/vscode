@@ -22,9 +22,9 @@ export class LCChannel implements IServerChannel {
 			case 'dissmissCodeWork':
 				this.service.dissmissCodeWork();
 				return Promise.resolve();
-			case 'showCodeWork':
-				this.service.showCodeWork();
-				return Promise.resolve();
+			// case 'showCodeWork':
+			// 	this.service.showCodeWork();
+			// 	return Promise.resolve();
 		}
 
 		throw new Error(`Call not found: ${command}`);

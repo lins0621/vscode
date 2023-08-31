@@ -8,7 +8,6 @@ export interface ICommonNativeLCService {
 	// 添加这个，会使createInstance不报错
 	readonly _serviceBrand: undefined;
 	dissmissCodeWork(): void;
-	showCodeWork(): void;
 }
 
 export const ICommonNativeLCService = createDecorator<ICommonNativeLCService>('lcService');

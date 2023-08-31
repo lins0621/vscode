@@ -23,6 +23,7 @@ import { Codicon } from 'vs/base/common/codicons';
 import { ThemeIcon } from 'vs/base/common/themables';
 import { NativeMenubarControl } from 'vs/workbench/electron-sandbox/parts/titlebar/menubarControl';
 import { IHoverService } from 'vs/workbench/services/hover/browser/hover';
+import { ICommonNativeLCService } from 'vs/platform/lc/common/ILC';
 
 export class TitlebarPart extends BrowserTitleBarPart {
 	private maxRestoreControl: HTMLElement | undefined;
@@ -66,8 +67,9 @@ export class TitlebarPart extends BrowserTitleBarPart {
 		@IHostService hostService: IHostService,
 		@INativeHostService private readonly nativeHostService: INativeHostService,
 		@IHoverService hoverService: IHoverService,
+		@ICommonNativeLCService iCommonNativeLCService: ICommonNativeLCService
 	) {
-		super(contextMenuService, configurationService, environmentService, instantiationService, themeService, storageService, layoutService, contextKeyService, hostService, hoverService);
+		super(contextMenuService, configurationService, environmentService, instantiationService, themeService, storageService, layoutService, contextKeyService, hostService, hoverService, iCommonNativeLCService);
 
 		this.environmentService = environmentService;
 	}

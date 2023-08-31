@@ -30,12 +30,14 @@ export class MenubarMainService implements IMenubarMainService {
 	) {
 		this.menubar = this.installMenuBarAfterWindowOpen();
 	}
-	showVSMenu(): void {
+
+	public showVSMenu(): void {
+
 		this.menubar.then(menubar => {
 			menubar.showVSMenu();
 		});
 	}
-	dismissMenu(): void {
+	public dismissMenu(): void {
 		this.menubar.then(menubar => {
 			menubar.dismissMenu();
 		});
@@ -51,6 +53,6 @@ export class MenubarMainService implements IMenubarMainService {
 		this.logService.trace('menubarService#updateMenubar', windowId);
 
 		const menubar = await this.menubar;
-		menubar.updateMenu(menus, windowId);
+		menubar?.updateMenu(menus, windowId);
 	}
 }
