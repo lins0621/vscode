@@ -1,9 +1,9 @@
 {
-	"nameShort": "Code - OSS",
-	"nameLong": "Code - OSS",
-	"applicationName": "code-oss",
+	"nameShort": "Ta+3 低代码",
+	"nameLong": "Ta+3 lowcode",
+	"applicationName": "Ta+3 lowcode",
 	"dataFolderName": ".vscode-oss",
-	"win32MutexName": "vscodeoss",
+	"win32MutexName": "ta+3",
 	"licenseName": "MIT",
 	"licenseUrl": "https://github.com/microsoft/vscode/blob/main/LICENSE.txt",
 	"serverLicenseUrl": "https://github.com/microsoft/vscode/blob/main/LICENSE.txt",

@@ -46,6 +46,7 @@ const dirs = [
 	'extensions/vscode-api-tests',
 	'extensions/vscode-colorize-tests',
 	'extensions/vscode-test-resolver',
+	'extensions/ta3',
 	'remote',
 	'remote/web',
 	'test/automation',
