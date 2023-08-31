@@ -301,7 +301,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 			// };
 			const codeWin = new BrowserView(options);
 			// Load URL
-			this._win.loadURL('https://lc.yinhaiyun.com/lcfront');
+			this._win.loadURL('http://localhost:8080/index.html');
 			this.lcService.bindWindow(this._win, codeWin, this.windowState, this.environmentMainService);
 			this._id = this._win.id;
 

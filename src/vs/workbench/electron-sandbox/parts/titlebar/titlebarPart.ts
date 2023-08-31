@@ -77,7 +77,7 @@ export class TitlebarPart extends BrowserTitleBarPart {
 		if (setting && this.appIcon) {
 			(this.appIcon.style as any)['-webkit-app-region'] = 'no-drag';
 		} else if (this.appIcon) {
-			(this.appIcon.style as any)['-webkit-app-region'] = 'drag';
+			(this.appIcon.style as any)['-webkit-app-region'] = 'no-drag';
 		}
 	}
 

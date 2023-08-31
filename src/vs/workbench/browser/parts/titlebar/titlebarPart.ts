@@ -99,7 +99,7 @@ export class TitlebarPart extends Part implements ITitleService {
 		@IWorkbenchLayoutService layoutService: IWorkbenchLayoutService,
 		@IContextKeyService private readonly contextKeyService: IContextKeyService,
 		@IHostService private readonly hostService: IHostService,
-		@IHoverService hoverService: IHoverService
+		@IHoverService hoverService: IHoverService,
 	) {
 		super(Parts.TITLEBAR_PART, { hasTitle: false }, themeService, storageService, layoutService);
 		this.windowTitle = this._register(instantiationService.createInstance(WindowTitle));
@@ -298,6 +298,15 @@ export class TitlebarPart extends Part implements ITitleService {
 
 		this.primaryWindowControls = append(primaryControlLocation === 'left' ? this.leftContent : this.rightContent, $('div.window-controls-container.primary'));
 		append(primaryControlLocation === 'left' ? this.rightContent : this.leftContent, $('div.window-controls-container.secondary'));
+		const alink = $('a');
+		alink.textContent = '返回工程目录';
+		alink.style.cssText = 'align-self: flex-end;z-index:99999;cursor: pointer;';
+		alink.addEventListener('click', () => {
+			// history.back();
+			// this.lcService.dissmissCodeWork();
+			// ipcRenderer.invoke('lc:dissmisswt');
+		});
+		append(primaryControlLocation === 'left' ? this.leftContent : this.rightContent, alink);
 
 		// Context menu on title
 		[EventType.CONTEXT_MENU, EventType.MOUSE_DOWN].forEach(event => {

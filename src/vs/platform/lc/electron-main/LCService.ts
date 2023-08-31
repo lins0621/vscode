@@ -3,7 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { BrowserView, BrowserWindow, Menu, app, ipcMain } from 'electron'; import { FileAccess } from 'vs/base/common/network';
+import { BrowserView, BrowserWindow, Menu, app, ipcMain } from 'electron';
+import { FileAccess } from 'vs/base/common/network';
 import { IEnvironmentMainService } from 'vs/platform/environment/electron-main/environmentMainService';
 import { IWindowState } from 'vs/platform/window/electron-main/window';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
@@ -12,6 +13,8 @@ import { Server as ElectronIPCServer } from 'vs/base/parts/ipc/electron-main/ipc
 import { URI } from 'vs/base/common/uri';
 import { IMenubarMainService } from 'vs/platform/menubar/electron-main/menubarMainService';
 import { ICommonNativeLCService } from 'vs/platform/lc/common/ILC';
+import { LcOps } from 'vs/platform/lc/common/LcOps';
+
 export const ILCService = createDecorator<ILCService>('lcService');
 
 export interface ILCService extends ICommonNativeLCService {
@@ -23,6 +26,9 @@ export interface ILCService extends ICommonNativeLCService {
 	showVSMenu(): void;
 
 	dismissVSMenuAndShowMyMenu(): void;
+	dissmissCodeWork(): void;
+	showCodeWork(args: LcOps): void;
+
 	getWebContents(): Electron.WebContents;
 	initService(mINativeHostMainService: INativeHostMainService, mainProcessElectronServer: ElectronIPCServer): void;
 }
@@ -31,7 +37,7 @@ export class LCService implements ILCService {
 	declare readonly _serviceBrand: undefined;
 	private homeBW: BrowserWindow | undefined;
 	private workBV!: BrowserView;
-	private windowState: IWindowState | undefined;
+	// private windowState: IWindowState | undefined;
 	private viewMargins: Electron.Rectangle | undefined;
 	private _isShowCodeWin: boolean = false;
 
@@ -53,7 +59,7 @@ export class LCService implements ILCService {
 	bindWindow(homeBW: BrowserWindow, workBV: BrowserView, windowState: IWindowState, environmentMainService: IEnvironmentMainService) {
 		this.homeBW = homeBW;
 		this.workBV = workBV;
-		this.windowState = windowState;
+		// this.windowState = windowState;
 		homeBW.on('resize', () => {
 			this.updateBVBounds();
 		});
@@ -69,8 +75,8 @@ export class LCService implements ILCService {
 	}
 
 	registerListeners(): void {
-		ipcMain.on('lc:showwt', () => {
-			this.showCodeWork();
+		ipcMain.on('lc:showwt', ({ }, args: LcOps) => {
+			this.showCodeWork(args);
 		});
 		ipcMain.on('lc:dissmisswt', () => {
 			this.dissmissCodeWork();
@@ -132,21 +138,38 @@ export class LCService implements ILCService {
 		}
 		this._isShowCodeWin = false;
 	}
-	showCodeWork(): void {
+
+	showCodeWork(args: LcOps): void {
+
+		const height = args.height;
+		const width = args.width;
+		const y = args.y;
+		const x = args.x;
+		const workspace = args.workspace;
+
 		if (!this.workBV) {
 			console.log('codeWin not init');
 			return;
 		}
 		if (!this._AttachCodeWin) {
+			// this.workBV.webContents.reload();
 			this.homeBW?.setBrowserView(this.workBV);
-			this.viewMargins = { x: 0, y: 200, width: this.windowState?.width || 800, height: this.windowState?.height || 600 };
-			this.workBV.setBounds(this.viewMargins);
-			this.workBV.webContents.loadURL(FileAccess.asBrowserUri(`vs/code/electron-sandbox/workbench/workbench${this.environmentMainService.isBuilt ? '' : '-dev'}.html`).toString(true));
-			this.workBV.webContents.openDevTools();
+
+			this.workBV.setBounds({ x: y || 0, y: x || 0, width: width || 800, height: height || 600 });
+			this.workBV.setAutoResize({ width: true, height: true, horizontal: false, vertical: false });
+			this.workBV?.webContents.loadURL(FileAccess.asBrowserUri(`vs/code/electron-sandbox/workbench/workbench${this.environmentMainService.isBuilt ? '' : '-dev'}.html`).toString(true));
+			if (workspace) {
+				this.openFolder(workspace);
+			}
+			this.workBV?.webContents.openDevTools(); //注册自定义键再打开
 			this._AttachCodeWin = true;
 		} else {
 			this.homeBW?.setBrowserView(this.workBV);
-			this.updateBVBounds();
+			if (workspace) {
+				this.openFolder(workspace);
+				this.workBV.webContents.reload();
+			}
+			// this.updateBVBounds(); 使用setAutoResize
 		}
 		this._isShowCodeWin = true;
 	}
