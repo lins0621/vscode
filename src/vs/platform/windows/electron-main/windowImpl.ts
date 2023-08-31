@@ -301,8 +301,10 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 			// };
 			const codeWin = new BrowserView(options);
 			// Load URL
-			this._win.loadURL('http://localhost:8080/index.html');
-			this.lcService.bindWindow(this._win, codeWin, this.windowState, this.environmentMainService);
+			this._win.loadURL('http://192.168.73.169:8080/index.html');
+			// this._win.loadURL(FileAccess.asBrowserUri(`vs/code/electron-sandbox/workbench/workbench${this.environmentMainService.isBuilt ? '' : '-dev'}.html`).toString(true));
+
+			this.lcService.bindWindow(this._win, codeWin);
 			this._id = this._win.id;
 
 			if (isMacintosh && useCustomTitleStyle) {
@@ -418,6 +420,8 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 		// Eventing
 		this.registerListeners();
+
+		this.lcService.dismissVSMenuAndShowMyMenu();
 	}
 
 	setRepresentedFilename(filename: string): void {

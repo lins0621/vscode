@@ -1,0 +1,104 @@
+{
+	"name": "ta3",
+	"displayName": "ta3",
+	"description": "低代码编辑平台",
+	"version": "1.0.1",
+	"engines": {
+		"vscode": "^1.5.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"author": {
+		"name": "face"
+	},
+	"activationEvents": [
+		"onCommand:extension.openLowcodePage",
+		"onCommand:extension.updateLowcodePage"
+	],
+	"main": "./out/extension",
+	"publisher": "face",
+	"repository": {
+		"type": "git",
+		"url": "git@git01.yinhaiyun.com:ta3404-low-code/lowcode_vscode_plugin.git"
+	},
+	"publishConfig": {
+		"registry": "http://npm1.yinhaiyun.com/repository/npm_yh_hosted_repository/"
+	},
+	"contributes": {
+		"languages": [
+			{
+				"id": "vue",
+				"extensions": [
+					".vue"
+				],
+				"aliases": [
+					"Vue",
+					"vue"
+				]
+			}
+		],
+		"configuration": {
+			"type": "object",
+			"title": "低代码设计器",
+			"properties": {
+				"openLowcodePage.src": {
+					"type": "string",
+					"default": "https://lc.yinhaiyun.com/lcui-test/lowcode-ui/",
+					"description": "设计器远程链接"
+				}
+			}
+		},
+		"commands": [
+			{
+				"command": "extension.openLowcodePage",
+				"title": "低代码可视化设计",
+				"icon": {
+					"light": "images/edit.svg",
+					"dark": "images/edit.svg"
+				}
+			},
+			{
+				"command": "extension.newVueFile",
+				"title": "新建vue页面",
+				"icon": {
+					"light": "images/edit.svg",
+					"dark": "images/edit.svg"
+				}
+			},
+			{
+				"command": "extension.updateLowcodePage",
+				"title": "更新低代码内容"
+			}
+		],
+		"menus": {
+			"explorer/context": [
+				{
+					"when": "resourceLangId == vue",
+					"command": "extension.openLowcodePage",
+					"group": "navigation@1"
+				},
+        {
+					"when": "explorerResourceIsFolder",
+					"command": "extension.newVueFile",
+					"group": "navigation@2"
+				}
+			],
+			"editor/context": [
+				{
+					"when": "editorFocus && resourceLangId == vue",
+					"command": "extension.updateLowcodePage",
+					"group": "navigation"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"build": "gulp compile-extension:ta3",
+    "vscode:prepublish": "npm run build"
+	},
+
+	"dependencies": {
+		"open": "^7.0.0"
+	}
+}

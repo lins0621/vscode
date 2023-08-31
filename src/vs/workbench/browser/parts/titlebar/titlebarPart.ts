@@ -37,6 +37,7 @@ import { IHoverDelegate } from 'vs/base/browser/ui/iconLabel/iconHoverDelegate';
 import { IHoverService } from 'vs/workbench/services/hover/browser/hover';
 import { Categories } from 'vs/platform/action/common/actionCommonCategories';
 import { MenuWorkbenchToolBar } from 'vs/platform/actions/browser/toolbar';
+import { ICommonNativeLCService } from 'vs/platform/lc/common/ILC';
 
 export class TitlebarPart extends Part implements ITitleService {
 
@@ -100,6 +101,7 @@ export class TitlebarPart extends Part implements ITitleService {
 		@IContextKeyService private readonly contextKeyService: IContextKeyService,
 		@IHostService private readonly hostService: IHostService,
 		@IHoverService hoverService: IHoverService,
+		@ICommonNativeLCService private readonly iCommonNativeLCService: ICommonNativeLCService
 	) {
 		super(Parts.TITLEBAR_PART, { hasTitle: false }, themeService, storageService, layoutService);
 		this.windowTitle = this._register(instantiationService.createInstance(WindowTitle));
@@ -300,11 +302,13 @@ export class TitlebarPart extends Part implements ITitleService {
 		append(primaryControlLocation === 'left' ? this.rightContent : this.leftContent, $('div.window-controls-container.secondary'));
 		const alink = $('a');
 		alink.textContent = '返回工程目录';
-		alink.style.cssText = 'align-self: flex-end;z-index:99999;cursor: pointer;';
-		alink.addEventListener('click', () => {
+		alink.style.cssText = 'align-self: flex-end;z-index:99999;cursor: pointer;color:blue;';
+		alink.addEventListener('click', (e) => {
 			// history.back();
 			// this.lcService.dissmissCodeWork();
 			// ipcRenderer.invoke('lc:dissmisswt');
+			this.iCommonNativeLCService.dissmissCodeWork();
+			e.stopImmediatePropagation();
 		});
 		append(primaryControlLocation === 'left' ? this.leftContent : this.rightContent, alink);
 

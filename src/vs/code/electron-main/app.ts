@@ -125,6 +125,7 @@ import { NODE_REMOTE_RESOURCE_CHANNEL_NAME, NODE_REMOTE_RESOURCE_IPC_METHOD_NAME
 import { Lazy } from 'vs/base/common/lazy';
 import { ILCService, LCService } from 'vs/platform/lc/electron-main/LCService';
 import { LCChannel } from 'vs/platform/lc/common/LCIpc';
+// import { ICommandService } from 'vs/platform/commands/common/commands';
 
 /**
  * The main VS Code application. There will only ever be one instance,
@@ -966,6 +967,8 @@ export class CodeApplication extends Disposable {
 		services.set(IStorageMainService, new SyncDescriptor(StorageMainService));
 		services.set(IApplicationStorageMainService, new SyncDescriptor(ApplicationStorageMainService));
 
+		//command
+		// services.set(ICommandService, new SyncDescriptor(CommandService));
 		// lcService
 		services.set(ILCService, new SyncDescriptor(LCService));
 
