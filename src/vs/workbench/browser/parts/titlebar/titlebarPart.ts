@@ -278,6 +278,15 @@ export class TitlebarPart extends Part implements ITitleService {
 
 		if (this.titleBarStyle !== 'native') {
 			this.layoutControls = append(this.rightContent, $('div.layout-controls-container'));
+			const alink = $('a');
+			alink.textContent = '返回工程目录';
+			alink.style.cssText = 'line-height:35px;z-index:99999;cursor: pointer;color:blue;';
+			alink.addEventListener('click', (e) => {
+				this.iCommonNativeLCService.dissmissCodeWork();
+				e.stopImmediatePropagation();
+			});
+			append(this.layoutControls, alink);
+
 			this.layoutControls.classList.toggle('show-layout-control', this.layoutControlEnabled);
 
 			this.layoutToolbar = this.instantiationService.createInstance(MenuWorkbenchToolBar, this.layoutControls, MenuId.LayoutControlMenu, {
@@ -301,17 +310,6 @@ export class TitlebarPart extends Part implements ITitleService {
 
 		this.primaryWindowControls = append(primaryControlLocation === 'left' ? this.leftContent : this.rightContent, $('div.window-controls-container.primary'));
 		append(primaryControlLocation === 'left' ? this.rightContent : this.leftContent, $('div.window-controls-container.secondary'));
-		const alink = $('a');
-		alink.textContent = '返回工程目录';
-		alink.style.cssText = 'align-self: flex-end;z-index:99999;cursor: pointer;color:blue;';
-		alink.addEventListener('click', (e) => {
-			// history.back();
-			// this.lcService.dissmissCodeWork();
-			// ipcRenderer.invoke('lc:dissmisswt');
-			this.iCommonNativeLCService.dissmissCodeWork();
-			e.stopImmediatePropagation();
-		});
-		append(primaryControlLocation === 'left' ? this.leftContent : this.rightContent, alink);
 
 		// Context menu on title
 		[EventType.CONTEXT_MENU, EventType.MOUSE_DOWN].forEach(event => {

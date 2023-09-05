@@ -139,7 +139,7 @@ export class LCService implements ILCService {
 			this.homeBW?.removeBrowserView(this.workBV);
 		}
 		this._isShowCodeWin = false;
-
+		this.homeBW?.webContents.executeJavaScript('top.document.getElementsByClassName("header")[0].style.display = ""');
 	}
 
 	private newOrOpenVsCode(): void {
