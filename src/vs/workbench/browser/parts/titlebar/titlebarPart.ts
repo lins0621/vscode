@@ -279,7 +279,7 @@ export class TitlebarPart extends Part implements ITitleService {
 		if (this.titleBarStyle !== 'native') {
 			this.layoutControls = append(this.rightContent, $('div.layout-controls-container'));
 			const alink = $('a');
-			alink.textContent = '返回工程目录';
+			alink.textContent = '返回平台';
 			alink.style.cssText = 'line-height:35px;cursor: pointer;color:blue;';
 			alink.addEventListener('click', (e) => {
 				this.iCommonNativeLCService.dissmissCodeWork();
