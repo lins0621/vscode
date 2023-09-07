@@ -96,7 +96,6 @@ export class LCService implements ILCService {
 		} else {
 			this.mINativeHostMainService.pickFolderAndOpen(undefined, options);
 		}
-
 	}
 
 	showVSMenu() {
@@ -153,9 +152,9 @@ export class LCService implements ILCService {
 		ops.height = mainOps?.height;
 		ops.x = 0;
 		ops.y = 0;
-
+		this.menubarMainService.showVSMenu();
 		if (!this._AttachCodeWin) {
-			this.menubarMainService.showVSMenu();
+
 			//创建
 			this.homeBW?.setBrowserView(this.workBV);
 			this.workBV.setBounds({ x: ops.y || 0, y: ops.x || 0, width: ops.width || 800, height: ops.height || 600 });
@@ -183,7 +182,7 @@ export class LCService implements ILCService {
 		const localPath = args.localPath;
 		const window = this.windowsMainService.getFocusedWindow();
 		window?.sendWhenReady('vscode:runAction', CancellationToken.None, { id: 'git.clone', from: 'menu', args: [gitUrl, localPath] });
-
+		// this.workspaceTrustManagementService.setParentFolderTrust(true);
 	}
 
 	//打开 vscode
