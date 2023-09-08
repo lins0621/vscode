@@ -44,6 +44,8 @@ const compilations = [
 	'github-authentication/tsconfig.json',
 	'github/tsconfig.json',
 	'ta3/tsconfig.json',
+
+	'vscode-material-icon-theme/tsconfig.json',
 	'grunt/tsconfig.json',
 	'gulp/tsconfig.json',
 	'html-language-features/client/tsconfig.json',
