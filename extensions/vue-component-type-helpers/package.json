@@ -2,6 +2,9 @@
 	"name": "vue-component-type-helpers",
 	"version": "1.8.10",
 	"license": "MIT",
+  "engines": {
+		"vscode": "^1.67.0"
+	},
 	"files": [
 		"*.js",
 		"*.d.ts"

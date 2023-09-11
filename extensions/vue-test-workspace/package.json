@@ -3,6 +3,9 @@
 	"name": "@volar/vue-test-workspace",
 	"version": "1.8.10",
 	"license": "MIT",
+  "engines": {
+		"vscode": "^1.67.0"
+	},
 	"devDependencies": {
 		"vue": "^3.3.0",
 		"vue-component-type-helpers": "1.8.10"

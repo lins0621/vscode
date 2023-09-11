@@ -3,6 +3,9 @@
 	"version": "1.8.10",
 	"main": "out/index.js",
 	"license": "MIT",
+  "engines": {
+		"vscode": "^1.67.0"
+	},
 	"files": [
 		"out/**/*.js",
 		"out/**/*.d.ts"
