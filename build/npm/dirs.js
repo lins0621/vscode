@@ -48,6 +48,7 @@ const dirs = [
 	'extensions/vscode-test-resolver',
 	'extensions/ta3',
 	'extensions/vscode-material-icon-theme',
+	'extensions/vscode-vue',
 	// 'extensions/vscode-language-pack-zh-hans',
 	'remote',
 	'remote/web',
