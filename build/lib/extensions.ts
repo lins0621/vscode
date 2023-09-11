@@ -475,6 +475,7 @@ const esbuildMediaScripts = [
 	'notebook-renderers/esbuild.js',
 	'ipynb/esbuild.js',
 	'simple-browser/esbuild-preview.js',
+	'vscode-vue/build.js'
 ];
 
 export async function webpackExtensions(taskName: string, isWatch: boolean, webpackConfigLocations: { configPath: string; outputRoot?: string }[]) {
