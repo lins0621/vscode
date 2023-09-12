@@ -955,6 +955,7 @@ export class TerminalTaskSystem extends Disposable implements ITaskSystem {
 						delayer = undefined;
 					});
 				}
+				this._fireTaskEvent(TaskEvent.general(TaskEventKind.Active, task, terminal.instanceId));
 			}
 		} else {
 			[terminal, error] = await this._createTerminal(task, resolver, workspaceFolder);
