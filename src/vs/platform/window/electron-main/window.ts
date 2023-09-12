@@ -75,6 +75,8 @@ export interface ICodeWindow extends IDisposable {
 	serializeWindowState(): IWindowState;
 
 	updateWindowControls(options: { height?: number; backgroundColor?: string; foregroundColor?: string }): void;
+
+	getWTWebContents(): Electron.WebContents;
 }
 
 export const enum LoadReason {

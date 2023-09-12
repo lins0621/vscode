@@ -122,7 +122,7 @@ let nlsConfigurationPromise = undefined;
 // The API might return an empty array on Linux, such as when
 // the 'C' locale is the user's only configured locale.
 // No matter the OS, if the array is empty, default back to 'en'.
-const resolved = app.getPreferredSystemLanguages()?.[0] ?? 'en';
+const resolved = app.getPreferredSystemLanguages()?.[0] ?? 'zh-cn';
 const osLocale = processZhLocale(resolved.toLowerCase());
 const metaDataFile = path.join(__dirname, 'nls.metadata.json');
 const locale = getUserDefinedLocale(argvConfig);
@@ -140,7 +140,7 @@ if (locale) {
 // In that case, use `en` as the Electron locale.
 
 if (process.platform === 'win32' || process.platform === 'linux') {
-	const electronLocale = (!locale || locale === 'qps-ploc') ? 'en' : locale;
+	const electronLocale = (!locale || locale === 'qps-ploc') ? 'zh-cn' : locale;
 	app.commandLine.appendSwitch('lang', electronLocale);
 }
 
@@ -641,7 +641,7 @@ async function resolveNlsConfiguration() {
 	 */
 	let appLocale = app.getLocale();
 	if (!appLocale) {
-		return { locale: 'en', osLocale, availableLanguages: {} };
+		return { locale: 'zh-cn', osLocale, availableLanguages: {} };
 	}
 
 	// See above the comment about the loader and case sensitiveness
@@ -649,7 +649,7 @@ async function resolveNlsConfiguration() {
 
 	const { getNLSConfiguration } = require('./vs/base/node/languagePacks');
 	nlsConfiguration = await getNLSConfiguration(product.commit, userDataPath, metaDataFile, appLocale, osLocale);
-	return nlsConfiguration ?? { locale: 'en', osLocale, availableLanguages: {} };
+	return nlsConfiguration ?? { locale: 'zh-cn', osLocale, availableLanguages: {} };
 }
 
 /**

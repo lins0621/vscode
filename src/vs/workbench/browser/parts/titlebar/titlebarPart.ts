@@ -37,6 +37,7 @@ import { IHoverDelegate } from 'vs/base/browser/ui/iconLabel/iconHoverDelegate';
 import { IHoverService } from 'vs/workbench/services/hover/browser/hover';
 import { Categories } from 'vs/platform/action/common/actionCommonCategories';
 import { MenuWorkbenchToolBar } from 'vs/platform/actions/browser/toolbar';
+import { ICommonNativeLCService } from 'vs/platform/lc/common/ILC';
 
 export class TitlebarPart extends Part implements ITitleService {
 
@@ -98,7 +99,8 @@ export class TitlebarPart extends Part implements ITitleService {
 		@IWorkbenchLayoutService layoutService: IWorkbenchLayoutService,
 		@IContextKeyService private readonly contextKeyService: IContextKeyService,
 		@IHostService private readonly hostService: IHostService,
-		@IHoverService hoverService: IHoverService
+		@IHoverService hoverService: IHoverService,
+		@ICommonNativeLCService private readonly iCommonNativeLCService: ICommonNativeLCService
 	) {
 		super(Parts.TITLEBAR_PART, { hasTitle: false }, themeService, storageService, layoutService);
 		this.windowTitle = this._register(instantiationService.createInstance(WindowTitle));
@@ -274,6 +276,15 @@ export class TitlebarPart extends Part implements ITitleService {
 
 		if (this.titleBarStyle !== 'native') {
 			this.layoutControls = append(this.rightContent, $('div.layout-controls-container'));
+			const alink = $('a');
+			alink.textContent = '返回平台';
+			alink.style.cssText = 'line-height:35px;cursor: pointer;color:blue;';
+			alink.addEventListener('click', (e) => {
+				this.iCommonNativeLCService.dissmissCodeWork();
+				e.stopImmediatePropagation();
+			});
+			append(this.layoutControls, alink);
+
 			this.layoutControls.classList.toggle('show-layout-control', this.layoutControlEnabled);
 
 			this._register(this.instantiationService.createInstance(MenuWorkbenchToolBar, this.layoutControls, MenuId.LayoutControlMenu, {

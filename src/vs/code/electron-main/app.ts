@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { app, BrowserWindow, dialog, protocol, session, Session, systemPreferences, WebFrameMain } from 'electron';
+import { app, dialog, protocol, session, Session, systemPreferences, WebFrameMain } from 'electron';
 import { addUNCHostToAllowlist, disableUNCAccessRestrictions } from 'vs/base/node/unc';
 import { validatedIpcMain } from 'vs/base/parts/ipc/electron-main/ipcMain';
 import { hostname, release } from 'os';
@@ -121,6 +121,9 @@ import { ElectronPtyHostStarter } from 'vs/platform/terminal/electron-main/elect
 import { PtyHostService } from 'vs/platform/terminal/node/ptyHostService';
 import { NODE_REMOTE_RESOURCE_CHANNEL_NAME, NODE_REMOTE_RESOURCE_IPC_METHOD_NAME, NodeRemoteResourceResponse, NodeRemoteResourceRouter } from 'vs/platform/remote/common/electronRemoteResources';
 import { Lazy } from 'vs/base/common/lazy';
+import { ILCService, LCService } from 'vs/platform/lc/electron-main/LCService';
+import { LCChannel } from 'vs/platform/lc/common/LCIpc';
+// import { ICommandService } from 'vs/platform/commands/common/commands';
 
 /**
  * The main VS Code application. There will only ever be one instance,
@@ -214,22 +217,22 @@ export class CodeApplication extends Disposable {
 			return details.resourceType === 'xhr' || isSafeFrame(details.frame);
 		};
 
-		const isAllowedVsCodeFileRequest = (details: Electron.OnBeforeRequestListenerDetails) => {
-			const frame = details.frame;
-			if (!frame || !this.windowsMainService) {
-				return false;
-			}
+		// const isAllowedVsCodeFileRequest = (details: Electron.OnBeforeRequestListenerDetails) => {
+		// 	const frame = details.frame;
+		// 	if (!frame || !this.windowsMainService) {
+		// 		return false;
+		// 	}
 
-			// Check to see if the request comes from one of the main windows (or shared process) and not from embedded content
-			const windows = BrowserWindow.getAllWindows();
-			for (const window of windows) {
-				if (frame.processId === window.webContents.mainFrame.processId) {
-					return true;
-				}
-			}
+		// 	// Check to see if the request comes from one of the main windows (or shared process) and not from embedded content
+		// 	const windows = BrowserWindow.getAllWindows();
+		// 	for (const window of windows) {
+		// 		if (frame.processId === window.webContents.mainFrame.processId) {
+		// 			return true;
+		// 		}
+		// 	}
 
-			return false;
-		};
+		// 	return false;
+		// };
 
 		const isAllowedWebviewRequest = (uri: URI, details: Electron.OnBeforeRequestListenerDetails): boolean => {
 			if (uri.path !== '/index.html') {
@@ -244,7 +247,7 @@ export class CodeApplication extends Disposable {
 			// Check to see if the request comes from one of the main editor windows.
 			for (const window of this.windowsMainService.getWindows()) {
 				if (window.win) {
-					if (frame.processId === window.win.webContents.mainFrame.processId) {
+					if (frame.processId === window.getWTWebContents().mainFrame.processId) {
 						return true;
 					}
 				}
@@ -262,12 +265,12 @@ export class CodeApplication extends Disposable {
 				}
 			}
 
-			if (uri.scheme === Schemas.vscodeFileResource) {
-				if (!isAllowedVsCodeFileRequest(details)) {
-					this.logService.error('Blocked vscode-file request', details.url);
-					return callback({ cancel: true });
-				}
-			}
+			// if (uri.scheme === Schemas.vscodeFileResource) {
+			// 	if (!isAllowedVsCodeFileRequest(details)) {
+			// 		this.logService.error('Blocked vscode-file request', details.url);
+			// 		return callback({ cancel: true });
+			// 	}
+			// }
 
 			// Block most svgs
 			if (uri.path.endsWith('.svg')) {
@@ -380,11 +383,11 @@ export class CodeApplication extends Disposable {
 		//
 		app.on('web-contents-created', (event, contents) => {
 
-			contents.on('will-navigate', event => {
-				this.logService.error('webContents#will-navigate: Prevented webcontent navigation');
+			// contents.on('will-navigate', event => {
+			// 	this.logService.error('webContents#will-navigate: Prevented webcontent navigation');
 
-				event.preventDefault();
-			});
+			// 	event.preventDefault();
+			// });
 
 			contents.setWindowOpenHandler(({ url }) => {
 				this.nativeHostMainService?.openExternal(undefined, url);
@@ -578,6 +581,9 @@ export class CodeApplication extends Disposable {
 
 		// Transient profiles handler
 		this._register(appInstantiationService.createInstance(UserDataProfilesHandler));
+
+		// initLCService
+		appInstantiationService.invokeFunction(accessor => this.initLCService(accessor, mainProcessElectronServer));
 
 		// Init Channels
 		appInstantiationService.invokeFunction(accessor => this.initChannels(accessor, mainProcessElectronServer, sharedProcessClient));
@@ -978,6 +984,11 @@ export class CodeApplication extends Disposable {
 		services.set(IStorageMainService, new SyncDescriptor(StorageMainService));
 		services.set(IApplicationStorageMainService, new SyncDescriptor(ApplicationStorageMainService));
 
+		//command
+		// services.set(ICommandService, new SyncDescriptor(CommandService));
+		// lcService
+		services.set(ILCService, new SyncDescriptor(LCService));
+
 		// Terminal
 		const ptyHostStarter = new ElectronPtyHostStarter({
 			graceTime: LocalReconnectConstants.GraceTime,
@@ -1106,6 +1117,10 @@ export class CodeApplication extends Disposable {
 		mainProcessElectronServer.registerChannel('nativeHost', nativeHostChannel);
 		sharedProcessClient.then(client => client.registerChannel('nativeHost', nativeHostChannel));
 
+		// lc
+		const lcServiceChannel = new LCChannel(accessor.get(ILCService));
+		mainProcessElectronServer.registerChannel('lc', lcServiceChannel);
+
 		// Workspaces
 		const workspacesChannel = ProxyChannel.fromService(accessor.get(IWorkspacesService), disposables);
 		mainProcessElectronServer.registerChannel('workspaces', workspacesChannel);
@@ -1159,6 +1174,10 @@ export class CodeApplication extends Disposable {
 		// Utility Process Worker
 		const utilityProcessWorkerChannel = ProxyChannel.fromService(accessor.get(IUtilityProcessWorkerMainService), disposables);
 		mainProcessElectronServer.registerChannel(ipcUtilityProcessWorkerChannelName, utilityProcessWorkerChannel);
+	}
+
+	initLCService(accessor: ServicesAccessor, mainProcessElectronServer: ElectronIPCServer) {
+		accessor.get(ILCService).initService(accessor.get(INativeHostMainService), mainProcessElectronServer);
 	}
 
 	private async openFirstWindow(accessor: ServicesAccessor, initialProtocolUrls: IInitialProtocolUrls | undefined): Promise<ICodeWindow[]> {
