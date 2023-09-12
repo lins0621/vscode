@@ -377,32 +377,32 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 	async pickFileFolderAndOpen(windowId: number | undefined, options: INativeOpenDialogOptions): Promise<void> {
 		const paths = await this.dialogMainService.pickFileFolder(options);
 		if (paths) {
-			await this.doOpenPicked(await Promise.all(paths.map(async path => (await SymlinkSupport.existsDirectory(path)) ? { folderUri: URI.file(path) } : { fileUri: URI.file(path) })), options, windowId);
+			await this.doOpenPicked(windowId, await Promise.all(paths.map(async path => (await SymlinkSupport.existsDirectory(path)) ? { folderUri: URI.file(path) } : { fileUri: URI.file(path) })), options);
 		}
 	}
 
 	async pickFolderAndOpen(windowId: number | undefined, options: INativeOpenDialogOptions): Promise<void> {
 		const paths = await this.dialogMainService.pickFolder(options);
 		if (paths) {
-			await this.doOpenPicked(paths.map(path => ({ folderUri: URI.file(path) })), options, windowId);
+			await this.doOpenPicked(windowId, paths.map(path => ({ folderUri: URI.file(path) })), options);
 		}
 	}
 
 	async pickFileAndOpen(windowId: number | undefined, options: INativeOpenDialogOptions): Promise<void> {
 		const paths = await this.dialogMainService.pickFile(options);
 		if (paths) {
-			await this.doOpenPicked(paths.map(path => ({ fileUri: URI.file(path) })), options, windowId);
+			await this.doOpenPicked(windowId, paths.map(path => ({ fileUri: URI.file(path) })), options);
 		}
 	}
 
 	async pickWorkspaceAndOpen(windowId: number | undefined, options: INativeOpenDialogOptions): Promise<void> {
 		const paths = await this.dialogMainService.pickWorkspace(options);
 		if (paths) {
-			await this.doOpenPicked(paths.map(path => ({ workspaceUri: URI.file(path) })), options, windowId);
+			await this.doOpenPicked(windowId, paths.map(path => ({ workspaceUri: URI.file(path) })), options);
 		}
 	}
 
-	private async doOpenPicked(openable: IWindowOpenable[], options: INativeOpenDialogOptions, windowId: number | undefined): Promise<void> {
+	async doOpenPicked(windowId: number | undefined, openable: IWindowOpenable[], options: INativeOpenDialogOptions): Promise<void> {
 		await this.windowsMainService.open({
 			context: OpenContext.DIALOG,
 			contextWindowId: windowId,
@@ -715,7 +715,7 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 
 	async resolveProxy(windowId: number | undefined, url: string): Promise<string | undefined> {
 		const window = this.windowById(windowId);
-		const session = window?.win?.webContents?.session;
+		const session = window?.getWTWebContents()?.session;
 
 		return session?.resolveProxy(url);
 	}
@@ -732,14 +732,14 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 	async openDevTools(windowId: number | undefined, options?: OpenDevToolsOptions): Promise<void> {
 		const window = this.windowById(windowId);
 		if (window?.win) {
-			window.win.webContents.openDevTools(options);
+			window.getWTWebContents().openDevTools(options);
 		}
 	}
 
 	async toggleDevTools(windowId: number | undefined): Promise<void> {
 		const window = this.windowById(windowId);
 		if (window?.win) {
-			const contents = window.win.webContents;
+			const contents = window.getWTWebContents();
 			contents.toggleDevTools();
 		}
 	}
@@ -747,7 +747,7 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 	async sendInputEvent(windowId: number | undefined, event: MouseInputEvent): Promise<void> {
 		const window = this.windowById(windowId);
 		if (window?.win && (event.type === 'mouseDown' || event.type === 'mouseUp')) {
-			window.win.webContents.sendInputEvent(event);
+			window.getWTWebContents().sendInputEvent(event);
 		}
 	}
 

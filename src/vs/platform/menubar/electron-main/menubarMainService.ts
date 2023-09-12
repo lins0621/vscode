@@ -13,6 +13,8 @@ export const IMenubarMainService = createDecorator<IMenubarMainService>('menubar
 
 export interface IMenubarMainService extends ICommonMenubarService {
 	readonly _serviceBrand: undefined;
+	showVSMenu(): void;
+	dismissMenu(): void;
 }
 
 export class MenubarMainService implements IMenubarMainService {
@@ -29,6 +31,18 @@ export class MenubarMainService implements IMenubarMainService {
 		this.menubar = this.installMenuBarAfterWindowOpen();
 	}
 
+	public showVSMenu(): void {
+
+		this.menubar.then(menubar => {
+			menubar.showVSMenu();
+		});
+	}
+	public dismissMenu(): void {
+		this.menubar.then(menubar => {
+			menubar.dismissMenu();
+		});
+	}
+
 	private async installMenuBarAfterWindowOpen(): Promise<Menubar> {
 		await this.lifecycleMainService.when(LifecycleMainPhase.AfterWindowOpen);
 
@@ -39,6 +53,6 @@ export class MenubarMainService implements IMenubarMainService {
 		this.logService.trace('menubarService#updateMenubar', windowId);
 
 		const menubar = await this.menubar;
-		menubar.updateMenu(menus, windowId);
+		menubar?.updateMenu(menus, windowId);
 	}
 }

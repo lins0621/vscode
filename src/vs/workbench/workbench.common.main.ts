@@ -350,7 +350,7 @@ import 'vs/workbench/contrib/timeline/browser/timeline.contribution';
 import 'vs/workbench/contrib/localHistory/browser/localHistory.contribution';
 
 // Workspace
-import 'vs/workbench/contrib/workspace/browser/workspace.contribution';
+// import 'vs/workbench/contrib/workspace/browser/workspace.contribution';
 
 // Workspaces
 import 'vs/workbench/contrib/workspaces/browser/workspaces.contribution';

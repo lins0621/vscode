@@ -17,6 +17,7 @@ import { findWindowOnFile } from 'vs/platform/windows/electron-main/windowsFinde
 import { toWorkspaceFolders } from 'vs/platform/workspaces/common/workspaces';
 import { IWorkspaceIdentifier } from 'vs/platform/workspace/common/workspace';
 import { FileAccess } from 'vs/base/common/network';
+import { IUserDataProfile } from 'vs/platform/userDataProfile/common/userDataProfile';
 
 suite('WindowsFinder', () => {
 
@@ -32,6 +33,16 @@ suite('WindowsFinder', () => {
 
 	function createTestCodeWindow(options: { lastFocusTime: number; openedFolderUri?: URI; openedWorkspace?: IWorkspaceIdentifier }): ICodeWindow {
 		return new class implements ICodeWindow {
+			getWTWebContents(): Electron.WebContents {
+				throw new Error('Method not implemented.');
+			}
+			profile?: IUserDataProfile | undefined;
+			showCodeWork(): void {
+				throw new Error('Method not implemented.');
+			}
+			dissmissCodeWork(): void {
+				throw new Error('Method not implemented.');
+			}
 			onWillLoad: Event<ILoadEvent> = Event.None;
 			onDidTriggerSystemContextMenu: Event<{ x: number; y: number }> = Event.None;
 			onDidSignalReady: Event<void> = Event.None;
@@ -107,4 +118,6 @@ suite('WindowsFinder', () => {
 		const window: ICodeWindow = createTestCodeWindow({ lastFocusTime: 1, openedWorkspace: testWorkspace });
 		assert.strictEqual(await findWindowOnFile([window], URI.file(join(fixturesFolder, 'vscode_workspace_2_folder', 'nested_vscode_folder', 'subfolder', 'file.txt')), localWorkspaceResolver), window);
 	});
+
+	ensureNoDisposablesAreLeakedInTestSuite();
 });
