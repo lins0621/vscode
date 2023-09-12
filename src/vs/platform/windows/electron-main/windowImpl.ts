@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { app, BrowserWindow, BrowserWindowConstructorOptions, Display, Event as ElectronEvent, nativeImage, NativeImage, Rectangle, screen, SegmentedControlSegment, systemPreferences, TouchBar, TouchBarSegmentedControl } from 'electron';
+import { app, BrowserWindow, BrowserView, BrowserWindowConstructorOptions, Display, Event as ElectronEvent, nativeImage, NativeImage, Rectangle, screen, SegmentedControlSegment, systemPreferences, TouchBar, TouchBarSegmentedControl } from 'electron';
 import { DeferredPromise, RunOnceScheduler, timeout } from 'vs/base/common/async';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { toErrorMessage } from 'vs/base/common/errorMessage';
@@ -44,6 +44,7 @@ import { IStateService } from 'vs/platform/state/node/state';
 import { IUserDataProfilesMainService } from 'vs/platform/userDataProfile/electron-main/userDataProfile';
 import { ILoggerMainService } from 'vs/platform/log/electron-main/loggerService';
 import { firstOrDefault } from 'vs/base/common/arrays';
+import { ILCService } from 'vs/platform/lc/electron-main/LCService';
 
 export interface IWindowCreationOptions {
 	readonly state: IWindowState;
@@ -192,7 +193,8 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		@IProductService private readonly productService: IProductService,
 		@IProtocolMainService private readonly protocolMainService: IProtocolMainService,
 		@IWindowsMainService private readonly windowsMainService: IWindowsMainService,
-		@IStateService private readonly stateService: IStateService
+		@IStateService private readonly stateService: IStateService,
+		@ILCService private readonly lcService: ILCService,
 	) {
 		super();
 
@@ -230,9 +232,10 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 					// Enable experimental css highlight api https://chromestatus.com/feature/5436441440026624
 					// Refs https://github.com/microsoft/vscode/issues/140098
 					enableBlinkFeatures: 'HighlightAPI',
-					sandbox: true
+					sandbox: true,
+					webSecurity: false,
 				},
-				experimentalDarkMode: true
+				experimentalDarkMode: true,
 			};
 
 			// Apply icon to window
@@ -290,8 +293,18 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 			// Create the browser window
 			mark('code/willCreateCodeBrowserWindow');
 			this._win = new BrowserWindow(options);
+			this._win.webContents.openDevTools();
 			mark('code/didCreateCodeBrowserWindow');
+			// const codeOptions = {
+			// 	...options,
+			// 	preload: FileAccess.asFileUri('vs/base/parts/sandbox/electron-sandbox/preload.js').fsPath,
+			// };
+			const codeWin = new BrowserView(options);
+			// Load URL
+			this._win.loadURL('http://192.168.73.169:8080/index.html');
+			// this._win.loadURL(FileAccess.asBrowserUri(`vs/code/electron-sandbox/workbench/workbench${this.environmentMainService.isBuilt ? '' : '-dev'}.html`).toString(true));
 
+			this.lcService.bindWindow(this._win, codeWin);
 			this._id = this._win.id;
 
 			if (isMacintosh && useCustomTitleStyle) {
@@ -396,7 +409,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 		// Open devtools if instructed from command line args
 		if (this.environmentMainService.args['open-devtools'] === true) {
-			this._win.webContents.openDevTools();
+			this.getWTWebContents().openDevTools();
 		}
 
 		// respect configured menu bar visibility
@@ -407,6 +420,8 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 		// Eventing
 		this.registerListeners();
+
+		this.lcService.dismissVSMenuAndShowMyMenu();
 	}
 
 	setRepresentedFilename(filename: string): void {
@@ -510,19 +525,23 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		});
 	}
 
-	private registerListeners(): void {
+	getWTWebContents(): Electron.WebContents {
+		return this.lcService.getWebContents();
+	}
 
+	private registerListeners(): void {
+		this.lcService.registerListeners();
 		// Window error conditions to handle
 		this._win.on('unresponsive', () => this.onWindowError(WindowError.UNRESPONSIVE));
-		this._win.webContents.on('render-process-gone', (event, details) => this.onWindowError(WindowError.PROCESS_GONE, { ...details }));
-		this._win.webContents.on('did-fail-load', (event, exitCode, reason) => this.onWindowError(WindowError.LOAD, { reason, exitCode }));
+		this.getWTWebContents().on('render-process-gone', (event, details) => this.onWindowError(WindowError.PROCESS_GONE, { ...details }));
+		this.getWTWebContents().on('did-fail-load', (event, exitCode, reason) => this.onWindowError(WindowError.LOAD, { reason, exitCode }));
 
 		// Prevent windows/iframes from blocking the unload
 		// through DOM events. We have our own logic for
 		// unloading a window that should not be confused
 		// with the DOM way.
 		// (https://github.com/microsoft/vscode/issues/122736)
-		this._win.webContents.on('will-prevent-unload', event => {
+		this.getWTWebContents().on('will-prevent-unload', event => {
 			event.preventDefault();
 		});
 
@@ -534,7 +553,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		});
 
 		// Remember that we loaded
-		this._win.webContents.on('did-finish-load', () => {
+		this.getWTWebContents().on('did-finish-load', () => {
 
 			// Associate properties from the load request if provided
 			if (this.pendingLoadConfig) {
@@ -589,7 +608,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 		// Inject headers when requests are incoming
 		const urls = ['https://marketplace.visualstudio.com/*', 'https://*.vsassets.io/*'];
-		this._win.webContents.session.webRequest.onBeforeSendHeaders({ urls }, async (details, cb) => {
+		this.getWTWebContents().session.webRequest.onBeforeSendHeaders({ urls }, async (details, cb) => {
 			const headers = await this.getMarketplaceHeaders();
 
 			cb({ cancel: false, requestHeaders: Object.assign(details.requestHeaders, headers) });
@@ -672,7 +691,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 				// Unresponsive
 				if (type === WindowError.UNRESPONSIVE) {
-					if (this.isExtensionDevelopmentHost || this.isExtensionTestHost || (this._win && this._win.webContents && this._win.webContents.isDevToolsOpened())) {
+					if (this.isExtensionDevelopmentHost || this.isExtensionTestHost || (this._win && this.getWTWebContents() && this.getWTWebContents().isDevToolsOpened())) {
 						// TODO@electron Workaround for https://github.com/microsoft/vscode/issues/56994
 						// In certain cases the window can report unresponsiveness because a breakpoint was hit
 						// and the process is stopped executing. The most typical cases are:
@@ -823,7 +842,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 				const proxyRules = newHttpProxy || '';
 				const proxyBypassRules = newNoProxy ? `${newNoProxy},<local>` : '<local>';
 				this.logService.trace(`Setting proxy to '${proxyRules}', bypassing '${proxyBypassRules}'`);
-				this._win.webContents.session.setProxy({ proxyRules, proxyBypassRules, pacScript: '' });
+				this.getWTWebContents().session.setProxy({ proxyRules, proxyBypassRules, pacScript: '' });
 			}
 		}
 	}
@@ -875,7 +894,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		this.readyState = ReadyState.NAVIGATING;
 
 		// Load URL
-		this._win.loadURL(FileAccess.asBrowserUri(`vs/code/electron-sandbox/workbench/workbench${this.environmentMainService.isBuilt ? '' : '-dev'}.html`).toString(true));
+		this.getWTWebContents().loadURL(FileAccess.asBrowserUri(`vs/code/electron-sandbox/workbench/workbench${this.environmentMainService.isBuilt ? '' : '-dev'}.html`).toString(true));
 
 		// Remember that we did load
 		const wasLoaded = this.wasLoaded;
@@ -888,11 +907,10 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 				if (this._win && !this._win.isVisible() && !this._win.isMinimized()) {
 					this._win.show();
 					this.focus({ force: true });
-					this._win.webContents.openDevTools();
+					this.getWTWebContents().openDevTools();
 				}
 			}, 10000)).schedule();
 		}
-
 		// Event
 		this._onWillLoad.fire({ workspace: configuration.workspace, reason: options.isReload ? LoadReason.RELOAD : wasLoaded ? LoadReason.LOAD : LoadReason.INITIAL });
 	}
@@ -1340,7 +1358,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		}
 
 		this._win.setSimpleFullScreen(fullscreen);
-		this._win.webContents.focus(); // workaround issue where focus is not going into window
+		this.getWTWebContents().focus(); // workaround issue where focus is not going into window
 	}
 
 	private useNativeFullScreen(): boolean {
@@ -1469,13 +1487,13 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 	send(channel: string, ...args: any[]): void {
 		if (this._win) {
-			if (this._win.isDestroyed() || this._win.webContents.isDestroyed()) {
+			if (this._win.isDestroyed() || this.getWTWebContents().isDestroyed()) {
 				this.logService.warn(`Sending IPC message to channel '${channel}' for window that is destroyed`);
 				return;
 			}
 
 			try {
-				this._win.webContents.send(channel, ...args);
+				this.getWTWebContents().send(channel, ...args);
 			} catch (error) {
 				this.logService.warn(`Error sending IPC message to channel '${channel}' of window ${this._id}: ${toErrorMessage(error)}`);
 			}

@@ -89,6 +89,7 @@ import 'vs/workbench/services/workingCopy/electron-sandbox/workingCopyHistorySer
 import 'vs/workbench/services/userDataSync/browser/userDataSyncEnablementService';
 import 'vs/workbench/services/extensions/electron-sandbox/nativeExtensionService';
 import 'vs/platform/userDataProfile/electron-sandbox/userDataProfileStorageService';
+import 'vs/platform/lc/electron-sandbox/LCService';
 
 import { InstantiationType, registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { IUserDataInitializationService, UserDataInitializationService } from 'vs/workbench/services/userData/browser/userDataInit';
