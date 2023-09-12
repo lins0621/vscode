@@ -49,7 +49,6 @@ export class TaskTerminalStatus extends Disposable {
 				case TaskEventKind.Inactive: this.eventInactive(event); break;
 				case TaskEventKind.ProcessEnded: this.eventEnd(event); break;
 			}
-			console.log(event.kind);
 		}));
 		this._register(toDisposable(() => {
 			for (const terminalData of this.terminalMap.values()) {
