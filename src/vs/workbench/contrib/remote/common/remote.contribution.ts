@@ -108,6 +108,7 @@ class RemoteInvalidWorkspaceDetector extends Disposable implements IWorkbenchCon
 	}
 
 	private async validateRemoteWorkspace(): Promise<void> {
+		debugger
 		const workspace = this.contextService.getWorkspace();
 		const workspaceUriToStat = workspace.configuration ?? firstOrDefault(workspace.folders)?.uri;
 		if (!workspaceUriToStat) {

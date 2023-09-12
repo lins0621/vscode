@@ -74,12 +74,15 @@ import { IFeaturedExtension } from 'vs/base/common/product';
 import { IExtensionManagementService } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { ExtensionIdentifier } from 'vs/platform/extensions/common/extensions';
 import { onUnexpectedError } from 'vs/base/common/errors';
+import { createTrustedTypesPolicy } from 'vs/base/browser/trustedTypes';
 
 const SLIDE_TRANSITION_TIME_MS = 250;
 const configurationKey = 'workbench.startupEditor';
 
 export const allWalkthroughsHiddenContext = new RawContextKey<boolean>('allWalkthroughsHidden', false);
 export const inWelcomeContext = new RawContextKey<boolean>('inWelcome', false);
+
+const ttPolicy = createTrustedTypesPolicy('welcome', { createHTML: value => value });
 
 export interface IWelcomePageStartEntry {
 	id: string;
@@ -759,7 +762,7 @@ export class GettingStartedPage extends EditorPane {
 			...defaultToggleStyles
 		});
 		showOnStartupCheckbox.domNode.id = 'showOnStartup';
-		const showOnStartupLabel = $('label.caption', { for: 'showOnStartup' }, localize('welcomePage.showOnStartup', "Show welcome page on startup"));
+		const showOnStartupLabel = $('label.caption', { for: 'showOnStartup' }, localize('welcomePage.showOnStartup', "启动时显示"));
 		const onShowOnStartupChanged = () => {
 			if (showOnStartupCheckbox.checked) {
 				this.telemetryService.publicLog2<GettingStartedActionEvent, GettingStartedActionClassification>('gettingStarted.ActionExecuted', { command: 'showOnStartupChecked', argument: undefined, walkthroughId: this.currentWalkthrough?.id });
@@ -780,16 +783,46 @@ export class GettingStartedPage extends EditorPane {
 
 		const header = $('.header', {},
 			$('h1.product-name.caption', {}, this.productService.nameLong),
-			$('p.subtitle.description', {}, localize({ key: 'gettingStarted.editingEvolved', comment: ['Shown as subtitle on the Welcome page.'] }, "Editing evolved"))
+			$('p.subtitle.description', {}, localize({ key: 'gettingStarted.editingEvolved', comment: ['Shown as subtitle on the Welcome page.'] }, "低代码前端工程化编辑器"))
 		);
 
 		const leftColumn = $('.categories-column.categories-column-left', {},);
 		const rightColumn = $('.categories-column.categories-column-right', {},);
 
-		const startList = this.buildStartList();
-		const recentList = this.buildRecentlyOpenedList();
-		const featuredExtensionList = this.buildFeaturedExtensionsList();
-		const gettingStartedList = this.buildGettingStartedWalkthroughsList();
+		// const lcDocument = $('h2');
+		// lcDocument.innerText = '注意:';
+		// lcDocument.style.color = 'red';
+		const lcDocumentContext = ttPolicy ? ttPolicy.createHTML(`
+		<h2 style='color:red'>注意:</h2>
+		<h3>低代码前端工程化编辑器基于vscode二开，由于时间关系并未适配完全，随意操作可能出现bug,如：</h3>
+		<ul>
+			<li>1. 新建窗口操作</li>
+			<li>2. 更改窗口设置操作</li>
+			<li>3. 执行窗口相关命令操作</li>
+			<li>4. 等....</li>
+		</ul>
+		<h4 style='color:red'>请仅使用前端代码开发相关功能及git相关功能</h4>
+		`) : '';
+
+		leftColumn.innerHTML = lcDocumentContext as string;
+
+		const lcDocumentInfo = ttPolicy ? ttPolicy.createHTML(`
+		<h3>具备能力</h3>
+		<ul>
+			<li>针对vue文件可以可视化开发（新建，右键）</li>
+			<li>代码及可视化切换</li>
+			<li>和在线开发具备相同资源共享使用能力</li>
+			<li>可以进行工程化调试</li>
+		</ul>
+		`) : '';
+
+		rightColumn.innerHTML = lcDocumentInfo as string;
+		// reset(leftColumn, lcDocument, lcDocumentContext);
+
+		// const startList = this.buildStartList();
+		// const recentList = this.buildRecentlyOpenedList();
+		// const featuredExtensionList = this.buildFeaturedExtensionsList();
+		// const gettingStartedList = this.buildGettingStartedWalkthroughsList();
 
 		const footer = $('.footer', {},
 			$('p.showOnStartup', {},
@@ -797,47 +830,47 @@ export class GettingStartedPage extends EditorPane {
 				showOnStartupLabel,
 			));
 
-		const layoutLists = () => {
-			if (gettingStartedList.itemCount) {
-				this.container.classList.remove('noWalkthroughs');
-				reset(rightColumn, featuredExtensionList.getDomElement(), gettingStartedList.getDomElement());
-			}
-			else {
-				this.container.classList.add('noWalkthroughs');
-				reset(rightColumn, featuredExtensionList.getDomElement());
-			}
-			setTimeout(() => this.categoriesPageScrollbar?.scanDomNode(), 50);
-			layoutRecentList();
-		};
+		// const layoutLists = () => {
+		// 	if (gettingStartedList.itemCount) {
+		// 		this.container.classList.remove('noWalkthroughs');
+		// 		reset(rightColumn, featuredExtensionList.getDomElement(), gettingStartedList.getDomElement());
+		// 	}
+		// 	else {
+		// 		this.container.classList.add('noWalkthroughs');
+		// 		reset(rightColumn, featuredExtensionList.getDomElement());
+		// 	}
+		// 	setTimeout(() => this.categoriesPageScrollbar?.scanDomNode(), 50);
+		// 	layoutRecentList();
+		// };
 
-		const layoutFeaturedExtension = () => {
-			if (featuredExtensionList.itemCount) {
-				this.container.classList.remove('noExtensions');
-				reset(rightColumn, featuredExtensionList.getDomElement(), gettingStartedList.getDomElement());
-			}
-			else {
-				this.container.classList.add('noExtensions');
-				reset(rightColumn, gettingStartedList.getDomElement());
-			}
-			setTimeout(() => this.categoriesPageScrollbar?.scanDomNode(), 50);
-			layoutRecentList();
-		};
+		// const layoutFeaturedExtension = () => {
+		// 	if (featuredExtensionList.itemCount) {
+		// 		this.container.classList.remove('noExtensions');
+		// 		reset(rightColumn, featuredExtensionList.getDomElement(), gettingStartedList.getDomElement());
+		// 	}
+		// 	else {
+		// 		this.container.classList.add('noExtensions');
+		// 		reset(rightColumn, gettingStartedList.getDomElement());
+		// 	}
+		// 	setTimeout(() => this.categoriesPageScrollbar?.scanDomNode(), 50);
+		// 	layoutRecentList();
+		// };
 
-		const layoutRecentList = () => {
-			if (this.container.classList.contains('noWalkthroughs') && this.container.classList.contains('noExtensions')) {
-				recentList.setLimit(10);
-				reset(leftColumn, startList.getDomElement());
-				reset(rightColumn, recentList.getDomElement());
-			} else {
-				recentList.setLimit(5);
-				reset(leftColumn, startList.getDomElement(), recentList.getDomElement());
-			}
-		};
+		// const layoutRecentList = () => {
+		// 	if (this.container.classList.contains('noWalkthroughs') && this.container.classList.contains('noExtensions')) {
+		// 		recentList.setLimit(10);
+		// reset(leftColumn, startList.getDomElement());
+		// 		reset(rightColumn, recentList.getDomElement());
+		// 	} else {
+		// 		recentList.setLimit(5);
+		// 		// reset(leftColumn, startList.getDomElement(), recentList.getDomElement());
+		// 	}
+		// };
 
-		featuredExtensionList.onDidChange(layoutFeaturedExtension);
-		layoutFeaturedExtension();
-		gettingStartedList.onDidChange(layoutLists);
-		layoutLists();
+		// featuredExtensionList.onDidChange(layoutFeaturedExtension);
+		// layoutFeaturedExtension();
+		// gettingStartedList.onDidChange(layoutLists);
+		// layoutLists();
 
 		reset(this.categoriesSlide, $('.gettingStartedCategoriesContainer', {}, header, leftColumn, rightColumn, footer,));
 		this.categoriesPageScrollbar?.scanDomNode();
@@ -884,7 +917,7 @@ export class GettingStartedPage extends EditorPane {
 
 		this.setSlide('categories');
 	}
-
+	// @ts-ignore
 	private buildRecentlyOpenedList(): GettingStartedIndexList<RecentEntry> {
 		const renderRecent = (recent: RecentEntry) => {
 			let fullPath: string;
@@ -965,7 +998,7 @@ export class GettingStartedPage extends EditorPane {
 
 		return recentlyOpenedList;
 	}
-
+	//@ts-ignore
 	private buildStartList(): GettingStartedIndexList<IWelcomePageStartEntry> {
 		const renderStartEntry = (entry: IWelcomePageStartEntry): HTMLElement =>
 			$('li',
@@ -993,7 +1026,7 @@ export class GettingStartedPage extends EditorPane {
 		startList.onDidChange(() => this.registerDispatchListeners());
 		return startList;
 	}
-
+	//@ts-ignore
 	private buildGettingStartedWalkthroughsList(): GettingStartedIndexList<IResolvedWalkthrough> {
 
 		const renderGetttingStaredWalkthrough = (category: IResolvedWalkthrough): HTMLElement => {
@@ -1081,6 +1114,7 @@ export class GettingStartedPage extends EditorPane {
 		return gettingStartedList;
 	}
 
+	//@ts-ignore
 	private buildFeaturedExtensionsList(): GettingStartedIndexList<IFeaturedExtension> {
 
 		const renderFeaturedExtensions = (entry: IFeaturedExtension): HTMLElement => {

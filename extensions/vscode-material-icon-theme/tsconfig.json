@@ -1,0 +1,29 @@
+{
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"target": "es6",
+		"lib": ["es6", "dom"],
+		"module": "commonjs",
+		"outDir": "./dist",
+		"strict": true,
+		"strictNullChecks": true,
+		"strictPropertyInitialization": true,
+		"noImplicitAny": true,
+		"sourceMap": true,
+		"downlevelIteration": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"types": [
+			"node"
+		]
+	},
+	"include": [
+		"src/**/*.ts",
+		"./node_modules/vscode/vscode.d.ts",
+		"./node_modules/vscode/lib/*"
+	]
+
+}
+

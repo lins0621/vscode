@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { app, BrowserWindow, dialog, protocol, session, Session, systemPreferences, WebFrameMain } from 'electron';
+import { app, dialog, protocol, session, Session, systemPreferences, WebFrameMain } from 'electron';
 import { addUNCHostToAllowlist, disableUNCAccessRestrictions } from 'vs/base/node/unc';
 import { validatedIpcMain } from 'vs/base/parts/ipc/electron-main/ipcMain';
 import { hostname, release } from 'os';
@@ -14,7 +14,7 @@ import { isEqualOrParent } from 'vs/base/common/extpath';
 import { once } from 'vs/base/common/functional';
 import { stripComments } from 'vs/base/common/json';
 import { getPathLabel } from 'vs/base/common/labels';
-import { Disposable } from 'vs/base/common/lifecycle';
+import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { Schemas } from 'vs/base/common/network';
 import { isAbsolute, join, posix } from 'vs/base/common/path';
 import { IProcessEnvironment, isLinux, isLinuxSnap, isMacintosh, isWindows, OS } from 'vs/base/common/platform';
@@ -121,6 +121,9 @@ import { ElectronPtyHostStarter } from 'vs/platform/terminal/electron-main/elect
 import { PtyHostService } from 'vs/platform/terminal/node/ptyHostService';
 import { NODE_REMOTE_RESOURCE_CHANNEL_NAME, NODE_REMOTE_RESOURCE_IPC_METHOD_NAME, NodeRemoteResourceResponse, NodeRemoteResourceRouter } from 'vs/platform/remote/common/electronRemoteResources';
 import { Lazy } from 'vs/base/common/lazy';
+import { ILCService, LCService } from 'vs/platform/lc/electron-main/LCService';
+import { LCChannel } from 'vs/platform/lc/common/LCIpc';
+// import { ICommandService } from 'vs/platform/commands/common/commands';
 
 /**
  * The main VS Code application. There will only ever be one instance,
@@ -214,22 +217,22 @@ export class CodeApplication extends Disposable {
 			return details.resourceType === 'xhr' || isSafeFrame(details.frame);
 		};
 
-		const isAllowedVsCodeFileRequest = (details: Electron.OnBeforeRequestListenerDetails) => {
-			const frame = details.frame;
-			if (!frame || !this.windowsMainService) {
-				return false;
-			}
+		// const isAllowedVsCodeFileRequest = (details: Electron.OnBeforeRequestListenerDetails) => {
+		// 	const frame = details.frame;
+		// 	if (!frame || !this.windowsMainService) {
+		// 		return false;
+		// 	}
 
-			// Check to see if the request comes from one of the main windows (or shared process) and not from embedded content
-			const windows = BrowserWindow.getAllWindows();
-			for (const window of windows) {
-				if (frame.processId === window.webContents.mainFrame.processId) {
-					return true;
-				}
-			}
+		// 	// Check to see if the request comes from one of the main windows (or shared process) and not from embedded content
+		// 	const windows = BrowserWindow.getAllWindows();
+		// 	for (const window of windows) {
+		// 		if (frame.processId === window.webContents.mainFrame.processId) {
+		// 			return true;
+		// 		}
+		// 	}
 
-			return false;
-		};
+		// 	return false;
+		// };
 
 		const isAllowedWebviewRequest = (uri: URI, details: Electron.OnBeforeRequestListenerDetails): boolean => {
 			if (uri.path !== '/index.html') {
@@ -244,7 +247,7 @@ export class CodeApplication extends Disposable {
 			// Check to see if the request comes from one of the main editor windows.
 			for (const window of this.windowsMainService.getWindows()) {
 				if (window.win) {
-					if (frame.processId === window.win.webContents.mainFrame.processId) {
+					if (frame.processId === window.getWTWebContents().mainFrame.processId) {
 						return true;
 					}
 				}
@@ -262,12 +265,12 @@ export class CodeApplication extends Disposable {
 				}
 			}
 
-			if (uri.scheme === Schemas.vscodeFileResource) {
-				if (!isAllowedVsCodeFileRequest(details)) {
-					this.logService.error('Blocked vscode-file request', details.url);
-					return callback({ cancel: true });
-				}
-			}
+			// if (uri.scheme === Schemas.vscodeFileResource) {
+			// 	if (!isAllowedVsCodeFileRequest(details)) {
+			// 		this.logService.error('Blocked vscode-file request', details.url);
+			// 		return callback({ cancel: true });
+			// 	}
+			// }
 
 			// Block most svgs
 			if (uri.path.endsWith('.svg')) {
@@ -380,11 +383,11 @@ export class CodeApplication extends Disposable {
 		//
 		app.on('web-contents-created', (event, contents) => {
 
-			contents.on('will-navigate', event => {
-				this.logService.error('webContents#will-navigate: Prevented webcontent navigation');
+			// contents.on('will-navigate', event => {
+			// 	this.logService.error('webContents#will-navigate: Prevented webcontent navigation');
 
-				event.preventDefault();
-			});
+			// 	event.preventDefault();
+			// });
 
 			contents.setWindowOpenHandler(({ url }) => {
 				this.nativeHostMainService?.openExternal(undefined, url);
@@ -578,6 +581,9 @@ export class CodeApplication extends Disposable {
 
 		// Transient profiles handler
 		this._register(appInstantiationService.createInstance(UserDataProfilesHandler));
+
+		// initLCService
+		appInstantiationService.invokeFunction(accessor => this.initLCService(accessor, mainProcessElectronServer));
 
 		// Init Channels
 		appInstantiationService.invokeFunction(accessor => this.initChannels(accessor, mainProcessElectronServer, sharedProcessClient));
@@ -978,6 +984,11 @@ export class CodeApplication extends Disposable {
 		services.set(IStorageMainService, new SyncDescriptor(StorageMainService));
 		services.set(IApplicationStorageMainService, new SyncDescriptor(ApplicationStorageMainService));
 
+		//command
+		// services.set(ICommandService, new SyncDescriptor(CommandService));
+		// lcService
+		services.set(ILCService, new SyncDescriptor(LCService));
+
 		// Terminal
 		const ptyHostStarter = new ElectronPtyHostStarter({
 			graceTime: LocalReconnectConstants.GraceTime,
@@ -1051,10 +1062,12 @@ export class CodeApplication extends Disposable {
 		// can talk to the first instance. Electron IPC does not work
 		// across apps until `requestSingleInstance` APIs are adopted.
 
-		const launchChannel = ProxyChannel.fromService(accessor.get(ILaunchMainService), { disableMarshalling: true });
+		const disposables = this._register(new DisposableStore());
+
+		const launchChannel = ProxyChannel.fromService(accessor.get(ILaunchMainService), disposables, { disableMarshalling: true });
 		this.mainProcessNodeIpcServer.registerChannel('launch', launchChannel);
 
-		const diagnosticsChannel = ProxyChannel.fromService(accessor.get(IDiagnosticsMainService), { disableMarshalling: true });
+		const diagnosticsChannel = ProxyChannel.fromService(accessor.get(IDiagnosticsMainService), disposables, { disableMarshalling: true });
 		this.mainProcessNodeIpcServer.registerChannel('diagnostics', diagnosticsChannel);
 
 		// Policies (main & shared process)
@@ -1070,7 +1083,7 @@ export class CodeApplication extends Disposable {
 		sharedProcessClient.then(client => client.registerChannel(LOCAL_FILE_SYSTEM_CHANNEL_NAME, fileSystemProviderChannel));
 
 		// User Data Profiles
-		const userDataProfilesService = ProxyChannel.fromService(accessor.get(IUserDataProfilesMainService));
+		const userDataProfilesService = ProxyChannel.fromService(accessor.get(IUserDataProfilesMainService), disposables);
 		mainProcessElectronServer.registerChannel('userDataProfiles', userDataProfilesService);
 		sharedProcessClient.then(client => client.registerChannel('userDataProfiles', userDataProfilesService));
 
@@ -1083,45 +1096,49 @@ export class CodeApplication extends Disposable {
 		mainProcessElectronServer.registerChannel('update', updateChannel);
 
 		// Issues
-		const issueChannel = ProxyChannel.fromService(accessor.get(IIssueMainService));
+		const issueChannel = ProxyChannel.fromService(accessor.get(IIssueMainService), disposables);
 		mainProcessElectronServer.registerChannel('issue', issueChannel);
 
 		// Encryption
-		const encryptionChannel = ProxyChannel.fromService(accessor.get(IEncryptionMainService));
+		const encryptionChannel = ProxyChannel.fromService(accessor.get(IEncryptionMainService), disposables);
 		mainProcessElectronServer.registerChannel('encryption', encryptionChannel);
 
 		// Signing
-		const signChannel = ProxyChannel.fromService(accessor.get(ISignService));
+		const signChannel = ProxyChannel.fromService(accessor.get(ISignService), disposables);
 		mainProcessElectronServer.registerChannel('sign', signChannel);
 
 		// Keyboard Layout
-		const keyboardLayoutChannel = ProxyChannel.fromService(accessor.get(IKeyboardLayoutMainService));
+		const keyboardLayoutChannel = ProxyChannel.fromService(accessor.get(IKeyboardLayoutMainService), disposables);
 		mainProcessElectronServer.registerChannel('keyboardLayout', keyboardLayoutChannel);
 
 		// Native host (main & shared process)
 		this.nativeHostMainService = accessor.get(INativeHostMainService);
-		const nativeHostChannel = ProxyChannel.fromService(this.nativeHostMainService);
+		const nativeHostChannel = ProxyChannel.fromService(this.nativeHostMainService, disposables);
 		mainProcessElectronServer.registerChannel('nativeHost', nativeHostChannel);
 		sharedProcessClient.then(client => client.registerChannel('nativeHost', nativeHostChannel));
 
+		// lc
+		const lcServiceChannel = new LCChannel(accessor.get(ILCService));
+		mainProcessElectronServer.registerChannel('lc', lcServiceChannel);
+
 		// Workspaces
-		const workspacesChannel = ProxyChannel.fromService(accessor.get(IWorkspacesService));
+		const workspacesChannel = ProxyChannel.fromService(accessor.get(IWorkspacesService), disposables);
 		mainProcessElectronServer.registerChannel('workspaces', workspacesChannel);
 
 		// Menubar
-		const menubarChannel = ProxyChannel.fromService(accessor.get(IMenubarMainService));
+		const menubarChannel = ProxyChannel.fromService(accessor.get(IMenubarMainService), disposables);
 		mainProcessElectronServer.registerChannel('menubar', menubarChannel);
 
 		// URL handling
-		const urlChannel = ProxyChannel.fromService(accessor.get(IURLService));
+		const urlChannel = ProxyChannel.fromService(accessor.get(IURLService), disposables);
 		mainProcessElectronServer.registerChannel('url', urlChannel);
 
 		// Extension URL Trust
-		const extensionUrlTrustChannel = ProxyChannel.fromService(accessor.get(IExtensionUrlTrustService));
+		const extensionUrlTrustChannel = ProxyChannel.fromService(accessor.get(IExtensionUrlTrustService), disposables);
 		mainProcessElectronServer.registerChannel('extensionUrlTrust', extensionUrlTrustChannel);
 
 		// Webview Manager
-		const webviewChannel = ProxyChannel.fromService(accessor.get(IWebviewManagerService));
+		const webviewChannel = ProxyChannel.fromService(accessor.get(IWebviewManagerService), disposables);
 		mainProcessElectronServer.registerChannel('webview', webviewChannel);
 
 		// Storage (main & shared process)
@@ -1134,11 +1151,11 @@ export class CodeApplication extends Disposable {
 		sharedProcessClient.then(client => client.registerChannel('profileStorageListener', profileStorageListener));
 
 		// Terminal
-		const ptyHostChannel = ProxyChannel.fromService(accessor.get(ILocalPtyService));
+		const ptyHostChannel = ProxyChannel.fromService(accessor.get(ILocalPtyService), disposables);
 		mainProcessElectronServer.registerChannel(TerminalIpcChannels.LocalPty, ptyHostChannel);
 
 		// External Terminal
-		const externalTerminalChannel = ProxyChannel.fromService(accessor.get(IExternalTerminalMainService));
+		const externalTerminalChannel = ProxyChannel.fromService(accessor.get(IExternalTerminalMainService), disposables);
 		mainProcessElectronServer.registerChannel('externalTerminal', externalTerminalChannel);
 
 		// Logger
@@ -1151,12 +1168,16 @@ export class CodeApplication extends Disposable {
 		mainProcessElectronServer.registerChannel('extensionhostdebugservice', electronExtensionHostDebugBroadcastChannel);
 
 		// Extension Host Starter
-		const extensionHostStarterChannel = ProxyChannel.fromService(accessor.get(IExtensionHostStarter));
+		const extensionHostStarterChannel = ProxyChannel.fromService(accessor.get(IExtensionHostStarter), disposables);
 		mainProcessElectronServer.registerChannel(ipcExtensionHostStarterChannelName, extensionHostStarterChannel);
 
 		// Utility Process Worker
-		const utilityProcessWorkerChannel = ProxyChannel.fromService(accessor.get(IUtilityProcessWorkerMainService));
+		const utilityProcessWorkerChannel = ProxyChannel.fromService(accessor.get(IUtilityProcessWorkerMainService), disposables);
 		mainProcessElectronServer.registerChannel(ipcUtilityProcessWorkerChannelName, utilityProcessWorkerChannel);
+	}
+
+	initLCService(accessor: ServicesAccessor, mainProcessElectronServer: ElectronIPCServer) {
+		accessor.get(ILCService).initService(accessor.get(INativeHostMainService), mainProcessElectronServer);
 	}
 
 	private async openFirstWindow(accessor: ServicesAccessor, initialProtocolUrls: IInitialProtocolUrls | undefined): Promise<ICodeWindow[]> {
