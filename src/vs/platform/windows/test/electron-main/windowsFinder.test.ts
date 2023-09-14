@@ -118,4 +118,6 @@ suite('WindowsFinder', () => {
 		const window: ICodeWindow = createTestCodeWindow({ lastFocusTime: 1, openedWorkspace: testWorkspace });
 		assert.strictEqual(await findWindowOnFile([window], URI.file(join(fixturesFolder, 'vscode_workspace_2_folder', 'nested_vscode_folder', 'subfolder', 'file.txt')), localWorkspaceResolver), window);
 	});
+
+	ensureNoDisposablesAreLeakedInTestSuite();
 });

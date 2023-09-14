@@ -7764,9 +7764,8 @@ declare module 'vscode' {
 		readonly logPath: string;
 
 		/**
-		 * The mode the extension is running in. This is specific to the current
-		 * extension. One extension may be in `ExtensionMode.Development` while
-		 * other extensions in the host run in `ExtensionMode.Release`.
+		 * The mode the extension is running in. See {@link ExtensionMode}
+		 * for possible values and scenarios.
 		 */
 		readonly extensionMode: ExtensionMode;
 
@@ -10000,6 +9999,11 @@ declare module 'vscode' {
 		 * `true` if the user has enabled telemetry or `false` if the user has disabled telemetry.
 		 */
 		export const onDidChangeTelemetryEnabled: Event<boolean>;
+
+		/**
+		 * An {@link Event} which fires when the default shell changes.
+		 */
+		export const onDidChangeShell: Event<string>;
 
 		/**
 		 * Creates a new {@link TelemetryLogger telemetry logger}.
@@ -17991,19 +17995,4 @@ declare module 'vscode' {
  * enables reusing existing code without migrating to a specific promise implementation. Still,
  * we recommend the use of native promises which are available in this editor.
  */
-interface Thenable<T> {
-	/**
-	* Attaches callbacks for the resolution and/or rejection of the Promise.
-	* @param onfulfilled The callback to execute when the Promise is resolved.
-	* @param onrejected The callback to execute when the Promise is rejected.
-	* @returns A Promise for the completion of which ever callback is executed.
-	*/
-	then<TResult>(onfulfilled?: (value: T) => TResult | Thenable<TResult>, onrejected?: (reason: any) => TResult | Thenable<TResult>): Thenable<TResult>;
-	/**
-	* Attaches callbacks for the resolution and/or rejection of the Promise.
-	* @param onfulfilled The callback to execute when the Promise is resolved.
-	* @param onrejected The callback to execute when the Promise is rejected.
-	* @returns A Promise for the completion of which ever callback is executed.
-	*/
-	then<TResult>(onfulfilled?: (value: T) => TResult | Thenable<TResult>, onrejected?: (reason: any) => void): Thenable<TResult>;
-}
+interface Thenable<T> extends PromiseLike<T> { }
