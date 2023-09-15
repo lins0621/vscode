@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { BrowserView, BrowserWindow, Menu, ipcMain, app } from 'electron';
+import { BrowserView, BrowserWindow, Menu, ipcMain, app, dialog } from 'electron';
 import { FileAccess } from 'vs/base/common/network';
 import { IEnvironmentMainService } from 'vs/platform/environment/electron-main/environmentMainService';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
@@ -80,6 +80,23 @@ export class LCService implements ILCService {
 
 		ipcMain.on('lc:showMenu', () => {
 			this.dismissVSMenuAndShowMyMenu();
+		});
+
+		// 通过electron获取用户本地目录
+		ipcMain.on('lc:open-directory-dialog', function (event, p) {
+			dialog.showOpenDialog({
+				properties: [p],
+				title: '请选择保存目录',
+				buttonLabel: '选择'
+			}).then(result => {
+				console.log(result)
+				event.sender.send('lc:selectedItem', result.filePaths[0])
+			})
+		});
+
+		// 获取electron运行平台类型
+		ipcMain.on('lc:get-platform', function (event, p) {
+			event.sender.send('lc:electronPlatform', process.platform)
 		});
 	}
 
