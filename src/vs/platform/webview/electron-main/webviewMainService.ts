@@ -6,6 +6,7 @@
 import { WebContents, webContents, WebFrameMain } from 'electron';
 import { Emitter } from 'vs/base/common/event';
 import { Disposable } from 'vs/base/common/lifecycle';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { FindInFrameOptions, FoundInFrameResult, IWebviewManagerService, WebviewWebContentsId, WebviewWindowId } from 'vs/platform/webview/common/webviewManagerService';
 import { WebviewProtocolProvider } from 'vs/platform/webview/electron-main/webviewProtocolProvider';
 import { IWindowsMainService } from 'vs/platform/windows/electron-main/windows';
@@ -19,9 +20,10 @@ export class WebviewMainService extends Disposable implements IWebviewManagerSer
 
 	constructor(
 		@IWindowsMainService private readonly windowsMainService: IWindowsMainService,
+		@IConfigurationService protected readonly _configurationService: IConfigurationService,
 	) {
 		super();
-		this._register(new WebviewProtocolProvider());
+		this._register(new WebviewProtocolProvider(_configurationService));
 	}
 
 	public async setIgnoreMenuShortcuts(id: WebviewWebContentsId | WebviewWindowId, enabled: boolean): Promise<void> {

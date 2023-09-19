@@ -15,6 +15,10 @@ import { ICommonNativeLCService } from 'vs/platform/lc/common/ILC';
 import { LcOps } from 'vs/platform/lc/electron-main/LcOps';
 import { IWindowsMainService } from 'vs/platform/windows/electron-main/windows';
 import { CancellationToken } from 'vs/base/common/cancellation';
+import { IConfigurationRegistry, Extensions as ConfigurationExtensions } from 'vs/platform/configuration/common/configurationRegistry';
+import { Registry } from 'vs/platform/registry/common/platform';
+import { localize } from 'vs/nls';
+
 
 export const ILCService = createDecorator<ILCService>('lcService');
 
@@ -32,6 +36,25 @@ export interface ILCService extends ICommonNativeLCService {
 	getWebContents(): Electron.WebContents;
 	initService(mINativeHostMainService: INativeHostMainService, mainProcessElectronServer: ElectronIPCServer): void;
 }
+
+(function registerConfiguration(): void {
+	const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
+	//ta3
+	registry.registerConfiguration({
+		'id': 'ta3lowcode',
+		'order': 1,
+		'type': 'object',
+		'title': localize('ta3lowcodeAll', "低代码配置"),
+		'properties': {
+			'ta3.lowcode.url': {
+				type: 'string',
+				description: localize('ta3lowcodeurl', "配置低代码设计器地址，默认为https://lc.yinhaiyun.com/lcui-test/lowcode-ui/index.html"),
+				default: 'https://lc.yinhaiyun.com/lcui-test/lowcode-ui',
+			},
+
+		}
+	});
+})();
 
 export class LCService implements ILCService {
 	declare readonly _serviceBrand: undefined;
