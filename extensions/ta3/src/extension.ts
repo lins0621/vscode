@@ -55,8 +55,9 @@ async function init(context: vscode.ExtensionContext): Promise<string> {
 			panelList[fileId].webview.postMessage({
 				cmd: 'updateData',
 				data: {
-					src: vscode.workspace.getConfiguration().get('openLowcodePage.src'), //src
-					// src: 'http://192.168.79.105:3000/', //src
+					// src: vscode.workspace.getConfiguration().get('openLowcodePage.src'), //src
+					src: 'vscode-webview://1n6rq5viutvhsts7atl5pt2q2o55t70c4gg1s0jomcdnefu77eor/login.html', //src
+					// src: 'http://192.168.73.169:3000/',
 					db: JSON.parse(fs.readFileSync(DB_PATH).toString() || '{}'), // 数据资源
 					code: fs.readFileSync(uri._fsPath).toString(), // 打开的页面数据
 					path: uri._fsPath // 文件路径
@@ -157,8 +158,9 @@ function openLowcodePage(uri: any, context: vscode.ExtensionContext, panelList: 
 			panel.webview.postMessage({
 				cmd: 'setSrc',
 				data: {
-					src: vscode.workspace.getConfiguration().get('openLowcodePage.src'), //src
-					// src: 'http://192.168.79.105:3000/', //src
+					// src: vscode.workspace.getConfiguration().get('openLowcodePage.src'), //src
+					src: 'vscode-webview://1n6rq5viutvhsts7atl5pt2q2o55t70c4gg1s0jomcdnefu77eor/login.html', //src
+					// src: 'http://192.168.73.169:3000/', //src
 					// db: JSON.parse(fs.readFileSync(DB_PATH).toString() || '{}'), // 数据资源
 					db: fs.readFileSync(appPath).toString(),
 					code: fs.readFileSync(uri._fsPath).toString(), // 打开的页面数据

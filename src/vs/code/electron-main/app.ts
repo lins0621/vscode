@@ -238,7 +238,7 @@ export class CodeApplication extends Disposable {
 		};
 
 		const isAllowedWebviewRequest = (uri: URI, details: Electron.OnBeforeRequestListenerDetails): boolean => {
-			if (uri.path !== '/index.html') {
+			if (uri.path !== '/index-vscode.html') {
 				return true; // Only restrict top level page of webviews: index.html
 			}
 
@@ -1022,6 +1022,9 @@ export class CodeApplication extends Disposable {
 		// Native Host
 		services.set(INativeHostMainService, new SyncDescriptor(NativeHostMainService, undefined, false /* proxied to other processes */));
 
+		// lcService
+		services.set(ILCService, new SyncDescriptor(LCService));
+
 		// Webview Manager
 		services.set(IWebviewManagerService, new SyncDescriptor(WebviewMainService));
 
@@ -1037,8 +1040,7 @@ export class CodeApplication extends Disposable {
 
 		//command
 		// services.set(ICommandService, new SyncDescriptor(CommandService));
-		// lcService
-		services.set(ILCService, new SyncDescriptor(LCService));
+
 
 		// Terminal
 		const ptyHostStarter = new ElectronPtyHostStarter({

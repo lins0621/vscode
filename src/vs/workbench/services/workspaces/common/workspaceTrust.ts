@@ -77,12 +77,12 @@ export class WorkspaceTrustEnablementService extends Disposable implements IWork
 
 	isWorkspaceTrustEnabled(): boolean {
 		// 默认关闭工作区受限模式
-		return false;
-		// if (this.environmentService.disableWorkspaceTrust) {
-		// 	return false;
-		// }
 
-		// return !!this.configurationService.getValue(WORKSPACE_TRUST_ENABLED);
+		if (this.environmentService.disableWorkspaceTrust) {
+			return false;
+		}
+
+		return false && !!this.configurationService.getValue(WORKSPACE_TRUST_ENABLED);
 	}
 }
 
