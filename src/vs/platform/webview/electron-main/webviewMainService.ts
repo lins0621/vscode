@@ -6,8 +6,10 @@
 import { WebContents, webContents, WebFrameMain } from 'electron';
 import { Emitter } from 'vs/base/common/event';
 import { Disposable } from 'vs/base/common/lifecycle';
+import { isMacintosh } from 'vs/base/common/platform';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { FindInFrameOptions, FoundInFrameResult, IWebviewManagerService, WebviewWebContentsId, WebviewWindowId } from 'vs/platform/webview/common/webviewManagerService';
+import { WebviewProtocolProviderMac } from 'vs/platform/webview/electron-main/webviewProtocolProvideMac';
 import { WebviewProtocolProvider } from 'vs/platform/webview/electron-main/webviewProtocolProvider';
 import { IWindowsMainService } from 'vs/platform/windows/electron-main/windows';
 
@@ -23,7 +25,12 @@ export class WebviewMainService extends Disposable implements IWebviewManagerSer
 		@IConfigurationService protected readonly _configurationService: IConfigurationService,
 	) {
 		super();
-		this._register(new WebviewProtocolProvider(_configurationService));
+		if (isMacintosh || 1 === 1) {//默认都走mac路线
+			this._register(new WebviewProtocolProviderMac(_configurationService));
+		} else {
+			this._register(new WebviewProtocolProvider());
+		}
+
 	}
 
 	public async setIgnoreMenuShortcuts(id: WebviewWebContentsId | WebviewWindowId, enabled: boolean): Promise<void> {

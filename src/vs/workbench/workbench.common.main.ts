@@ -305,6 +305,9 @@ import 'vs/workbench/contrib/themes/browser/themes.contribution';
 // Update
 import 'vs/workbench/contrib/update/browser/update.contribution';
 
+// lc
+import 'vs/platform/lc/common/lc.config.contribution';
+
 // Surveys
 import 'vs/workbench/contrib/surveys/browser/nps.contribution';
 import 'vs/workbench/contrib/surveys/browser/ces.contribution';
