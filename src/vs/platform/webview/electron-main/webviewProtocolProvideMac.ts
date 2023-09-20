@@ -50,8 +50,8 @@ export class WebviewProtocolProviderMac extends Disposable {
 		for (let pair of cookiePairs) {
 			pair = pair.trim();
 			const [key, value] = pair.split('=').map(part => part.trim());
-			if (key === 'path') {
-				result[key] = value;
+			if (key?.toLocaleLowerCase() === 'path') {
+				result['path'] = value;
 			} else if (key === 'JSESSIONID') {
 				result.value = pair;
 			}
@@ -107,7 +107,9 @@ export class WebviewProtocolProviderMac extends Disposable {
 				const response = await fetch(trueUrl, reqInit);
 				if (response.headers.getSetCookie()[0]) {
 					const parseCookie = this.parseCookie(response.headers.getSetCookie()[0]);
+					parseCookie.url = trueUrl;
 					ses.cookies.set(parseCookie);
+					this.path = parseCookie.path || '';
 				}
 				return response;
 			}
