@@ -12,6 +12,7 @@ import { FindInFrameOptions, FoundInFrameResult, IWebviewManagerService, Webview
 import { WebviewProtocolProviderMac } from 'vs/platform/webview/electron-main/webviewProtocolProvideMac';
 import { WebviewProtocolProvider } from 'vs/platform/webview/electron-main/webviewProtocolProvider';
 import { IWindowsMainService } from 'vs/platform/windows/electron-main/windows';
+import { ILCService } from 'vs/platform/lc/electron-main/LCService';
 
 export class WebviewMainService extends Disposable implements IWebviewManagerService {
 
@@ -23,10 +24,12 @@ export class WebviewMainService extends Disposable implements IWebviewManagerSer
 	constructor(
 		@IWindowsMainService private readonly windowsMainService: IWindowsMainService,
 		@IConfigurationService protected readonly _configurationService: IConfigurationService,
+		@ILCService private readonly lcService: ILCService,
 	) {
 		super();
+
 		if (isMacintosh || 1 === 1) {//默认都走mac路线
-			this._register(new WebviewProtocolProviderMac(_configurationService));
+			this._register(new WebviewProtocolProviderMac(_configurationService, this.lcService));
 		} else {
 			this._register(new WebviewProtocolProvider());
 		}

@@ -277,7 +277,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 			// Create the browser window
 			mark('code/willCreateCodeBrowserWindow');
-			let lowcodeWinOptions = { ...options }
+			const lowcodeWinOptions = { ...options };
 			if (lowcodeWinOptions.webPreferences) {
 				lowcodeWinOptions.webPreferences.zoomFactor = 0.9;
 			}
