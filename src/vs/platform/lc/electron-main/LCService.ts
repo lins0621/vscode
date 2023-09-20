@@ -178,10 +178,12 @@ export class LCService implements ILCService {
 			this.homeBW?.removeBrowserView(this.workBV);
 		}
 		this._isShowCodeWin = false;
+		this.homeBW?.webContents.executeJavaScript('top.document.getElementsByClassName("headerBarArea")[0].style.display = "flex"');
 		this.homeBW?.webContents.executeJavaScript('top.document.getElementsByClassName("header")[0].style.display = ""');
 	}
 
 	private newOrOpenVsCode(): void {
+		this.homeBW?.webContents.executeJavaScript('top.document.getElementsByClassName("headerBarArea")[0].style.display = "none"');
 		if (!this.workBV) {
 			console.log('codeWin not init');
 			return;
@@ -194,7 +196,6 @@ export class LCService implements ILCService {
 		ops.y = 0;
 		this.menubarMainService.showVSMenu();
 		if (!this._AttachCodeWin) {
-
 			//创建
 			this.homeBW?.setBrowserView(this.workBV);
 			this.workBV.setBounds({ x: ops.y || 0, y: ops.x || 0, width: ops.width || 800, height: ops.height || 600 });
@@ -207,7 +208,6 @@ export class LCService implements ILCService {
 			// 还原
 			this.homeBW?.setBrowserView(this.workBV);
 			this.workBV.setBounds({ x: ops.y || 0, y: ops.x || 0, width: ops.width || 800, height: ops.height || 600 });
-
 		}
 		this._isShowCodeWin = true;
 	}
