@@ -10,7 +10,7 @@ import { Event } from 'vs/base/common/event';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { isEqual } from 'vs/base/common/resources';
 import { URI } from 'vs/base/common/uri';
-import { generateUuid } from 'vs/base/common/uuid';
+// import { generateUuid } from 'vs/base/common/uuid';
 import { IContextKeyService, RawContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { ExtensionIdentifier } from 'vs/platform/extensions/common/extensions';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
@@ -356,9 +356,11 @@ export class WebviewOriginStore {
 			return existing;
 		}
 
-		const newOrigin = generateUuid();
+		// const newOrigin = generateUuid();
+		const newOrigin = btoa(viewType);
 		this._state[key] = newOrigin;
 		this._memento.saveMemento();
+
 		return newOrigin;
 	}
 

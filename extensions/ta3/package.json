@@ -38,17 +38,6 @@
 				]
 			}
 		],
-		"configuration": {
-			"type": "object",
-			"title": "低代码设计器",
-			"properties": {
-				"openLowcodePage.src": {
-					"type": "string",
-					"default": "https://lc.yinhaiyun.com/lcui-test/lowcode-ui/",
-					"description": "设计器远程链接"
-				}
-			}
-		},
 		"commands": [
 			{
 				"command": "extension.openLowcodePage",

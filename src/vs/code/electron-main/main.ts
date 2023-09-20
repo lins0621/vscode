@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import 'vs/platform/update/common/update.config.contribution';
+import 'vs/platform/lc/common/lc.config.contribution';
 
 import { app, dialog } from 'electron';
 import { unlinkSync } from 'fs';

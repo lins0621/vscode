@@ -46,15 +46,14 @@ export const tocData: ITOCEntry<string> = {
 	label: 'root',
 	children: [
 		{
-			id: 'ta3lowcode',
-			label: localize('ta3lowcode', "低代码设置"),
-			settings: ['ta3.*'],
+			id: 'ta',
+			label: localize('ta', 'Ta+3设置'),
 			children: [
 				{
-					id: 'ta3/lowcode',
-					label: localize('ta3lowcodeurl', "低代码设计器设置"),
-					settings: ['ta3.lowcode*']
-				}
+					id: 'ta/lowcode',
+					label: localize('lowcode', '低代码设置'),
+					settings: ['lowcode.url']
+				},
 			]
 		},
 		{

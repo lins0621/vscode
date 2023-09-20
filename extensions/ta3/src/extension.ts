@@ -6,15 +6,32 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as open from 'open';
+import * as crypto from 'crypto';
 
 const DB_PATH = path.join(__dirname, './data/db.json');
 
 const VUE_TEMPLATE = '';
 
+//配置
+const url = vscode.workspace.getConfiguration().get('lowcode.url')?.toString() || '';
+const { pathname } = new URL(url);
 
 export function activate(context: vscode.ExtensionContext) {
 	init(context);
+}
 
+async function hash(parentOrigin: string, salt: string): Promise<string> {
+	const strData = JSON.stringify({ parentOrigin, salt });
+	const encoder = new TextEncoder();
+	const arrData = encoder.encode(strData);
+	const hash = await crypto.subtle.digest('sha-256', arrData);
+	return sha256AsBase32(hash);
+}
+
+function sha256AsBase32(bytes: ArrayBuffer): string {
+	const array = Array.from(new Uint8Array(bytes));
+	const hexArray = array.map(b => b.toString(16).padStart(2, '0')).join('');
+	return BigInt(`0x${hexArray}`).toString(32).padStart(52, '0');
 }
 
 async function getWebViewContent(context: vscode.ExtensionContext, templatePath: string) {
@@ -49,24 +66,26 @@ async function init(context: vscode.ExtensionContext): Promise<string> {
 
 	// 更新低代码页面数据
 	context.subscriptions.push(vscode.commands.registerCommand('extension.updateLowcodePage', (uri) => {
-		// console.log(uri)
-		const fileId = uri._fsPath;// 路径作为文件的id
-		if (panelList[fileId]) {
-			panelList[fileId].webview.postMessage({
-				cmd: 'updateData',
-				data: {
-					// src: vscode.workspace.getConfiguration().get('openLowcodePage.src'), //src
-					src: 'vscode-webview://1n6rq5viutvhsts7atl5pt2q2o55t70c4gg1s0jomcdnefu77eor/login.html', //src
-					// src: 'http://192.168.73.169:3000/',
-					db: JSON.parse(fs.readFileSync(DB_PATH).toString() || '{}'), // 数据资源
-					code: fs.readFileSync(uri._fsPath).toString(), // 打开的页面数据
-					path: uri._fsPath // 文件路径
-				}
-			});
-		} else {
-			// vscode.window.showInformationMessage(`请先打开低代码设计器`)
-		}
-
+		const serverId = btoa(uri._fsPath);
+		const serverFileIdPromise = hash('vscode-file://vscode-app', serverId);
+		serverFileIdPromise.then(id => {
+			const fileId = uri._fsPath;// 路径作为文件的id
+			if (panelList[fileId]) {
+				panelList[fileId].webview.postMessage({
+					cmd: 'updateData',
+					data: {
+						// src: vscode.workspace.getConfiguration().get('openLowcodePage.src'), //src
+						src: `vscode-webview://${id}` + pathname, //src
+						// src: 'http://192.168.73.169:3000/',
+						db: JSON.parse(fs.readFileSync(DB_PATH).toString() || '{}'), // 数据资源
+						code: fs.readFileSync(uri._fsPath).toString(), // 打开的页面数据
+						path: uri._fsPath // 文件路径
+					}
+				});
+			} else {
+				// vscode.window.showInformationMessage(`请先打开低代码设计器`)
+			}
+		});
 	}));
 
 
@@ -118,89 +137,97 @@ function openLowcodePage(uri: any, context: vscode.ExtensionContext, panelList: 
 	if (uri) {
 		let dirPath = uri.fsPath;
 		const stat = fs.lstatSync(dirPath);
-		console.log(uri._fsPath);
 		const fileId = uri._fsPath;// 路径作为文件的id
-		const appPath = methods.getAppPath(uri);// 当前所在工程根目录中的排至文件app.json
+		const appPath = methods.getAppPath(uri);// 当前所在工程根目录中的排至文件app.json //改为从context获取
+		const serverId = btoa(uri._fsPath);
+		const serverFileIdPromise = hash('vscode-file://vscode-app', serverId);
 
-		if (panelList[fileId]) {// 如果已经是打开的那么直接激活
-			const columnToShowIn = vscode.window.activeTextEditor
-				? vscode.window.activeTextEditor.viewColumn
-				: undefined;
-			panelList[fileId].reveal(columnToShowIn);
-			return;
-		}
-		if (stat.isFile()) { dirPath = path.dirname(dirPath); }
-		const fileName = path.basename(uri._fsPath);
-		const pclintBar = vscode.window.createStatusBarItem();
-		pclintBar.text = `目标文件夹：${dirPath}`;
-		pclintBar.show();
-		const panel = vscode.window.createWebviewPanel(
-			uri._fsPath, // viewType
-			fileName, //视图标题
-			vscode.ViewColumn.One,
-			{
-				enableScripts: true, // 启用JS，默认禁用
-				retainContextWhenHidden: true, // webview被隐藏时保持状态，避免被重置
-			}
-		);
-		panel.onDidChangeViewState(() => {
-			if (panel.visible) {
-				pclintBar.show();
-			} else {
-				pclintBar.hide();
-			}
-		});
 		// 获取index.html
 
-		getWebViewContent(context, 'src/view/index.html').then((html) => {
-			panel.webview.html = html;
-			// 给index.html 发送编辑器iframe初始信息
-			panel.webview.postMessage({
-				cmd: 'setSrc',
-				data: {
-					// src: vscode.workspace.getConfiguration().get('openLowcodePage.src'), //src
-					src: 'vscode-webview://1n6rq5viutvhsts7atl5pt2q2o55t70c4gg1s0jomcdnefu77eor/login.html', //src
-					// src: 'http://192.168.73.169:3000/', //src
-					// db: JSON.parse(fs.readFileSync(DB_PATH).toString() || '{}'), // 数据资源
-					db: fs.readFileSync(appPath).toString(),
-					code: fs.readFileSync(uri._fsPath).toString(), // 打开的页面数据
-					path: uri._fsPath // 文件路径
+		serverFileIdPromise.then(id => {
+			if (panelList[fileId]) {// 如果已经是打开的那么直接激活
+				const columnToShowIn = vscode.window.activeTextEditor
+					? vscode.window.activeTextEditor.viewColumn
+					: undefined;
+				panelList[fileId].reveal(columnToShowIn);
+				return;
+			}
+
+			if (stat.isFile()) { dirPath = path.dirname(dirPath); }
+			const fileName = path.basename(uri._fsPath);
+			const pclintBar = vscode.window.createStatusBarItem();
+			pclintBar.text = `目标文件夹：${dirPath}`;
+			pclintBar.show();
+
+
+			const panel = vscode.window.createWebviewPanel(
+				uri._fsPath, // viewType
+				fileName, //视图标题
+				vscode.ViewColumn.One,
+				{
+					enableScripts: true, // 启用JS，默认禁用
+					retainContextWhenHidden: true, // webview被隐藏时保持状态，避免被重置
+				}
+			);
+			panel.onDidChangeViewState(() => {
+				if (panel.visible) {
+					pclintBar.show();
+				} else {
+					pclintBar.hide();
 				}
 			});
-			panel.webview.onDidReceiveMessage(message => {
-				if (message.cmd && message.data) {
-					const method = methods[message.cmd];
-					if (method) {
-						// 如果是获取文件的话 那么需要返回到index.html
-						if (message.cmd === 'getFile') {
-							method(message, vscode, dirPath).then((data: any) => {
-								panel.webview.postMessage({
-									cmd: 'returnFile',
-									data: {
-										file: data,
-									}
-								});
-							});
-						} else {
-							method(message, vscode, dirPath);
-						}
+			// 获取index.html
 
+			getWebViewContent(context, 'src/view/index.html').then((html) => {
+				panel.webview.html = html;
+				// 给index.html 发送编辑器iframe初始信息
+				panel.webview.postMessage({
+					cmd: 'setSrc',
+					data: {
+						// src: vscode.workspace.getConfiguration().get('openLowcodePage.src'), //src
+						src: `vscode-webview://${id}` + pathname, //src
+						// src: 'http://192.168.73.169:3000/', //src
+						// db: JSON.parse(fs.readFileSync(DB_PATH).toString() || '{}'), // 数据资源
+						db: fs.readFileSync(appPath).toString(),
+						code: fs.readFileSync(uri._fsPath).toString(), // 打开的页面数据
+						path: uri._fsPath // 文件路径
 					}
-				} else {
-					vscode.window.showInformationMessage(`没有与消息对应的方法`);
-				}
-			}, undefined, context.subscriptions);
+				});
+				panel.webview.onDidReceiveMessage(message => {
+					if (message.cmd && message.data) {
+						const method = methods[message.cmd];
+						if (method) {
+							// 如果是获取文件的话 那么需要返回到index.html
+							if (message.cmd === 'getFile') {
+								method(message, vscode, dirPath).then((data: any) => {
+									panel.webview.postMessage({
+										cmd: 'returnFile',
+										data: {
+											file: data,
+										}
+									});
+								});
+							} else {
+								method(message, vscode, dirPath);
+							}
 
-		});
+						}
+					} else {
+						vscode.window.showInformationMessage(`没有与消息对应的方法`);
+					}
+				}, undefined, context.subscriptions);
 
-		panel.onDidDispose(() => {
-			pclintBar.dispose();
-			// 关闭的时候删除panel
-			panelList[fileId] = undefined;
-			delete panelList[fileId];
+			});
+
+			panel.onDidDispose(() => {
+				pclintBar.dispose();
+				// 关闭的时候删除panel
+				panelList[fileId] = undefined;
+				delete panelList[fileId];
+			});
+			// 添加panelList
+			panelList[fileId] = panel;
 		});
-		// 添加panelList
-		panelList[fileId] = panel;
 
 	} else {
 		vscode.window.showInformationMessage(`无法获取文件夹路径`);

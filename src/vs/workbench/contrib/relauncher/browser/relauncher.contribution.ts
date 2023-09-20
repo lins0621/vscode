@@ -29,6 +29,7 @@ interface IConfiguration extends IWindowsConfiguration {
 	window: IWindowSettings;
 	workbench?: { enableExperiments?: boolean };
 	_extensionsGallery?: { enablePPE?: boolean };
+	locode?: { url?: string };
 }
 
 export class SettingsChangeRelauncher extends Disposable implements IWorkbenchContribution {
@@ -43,7 +44,8 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 		'security.workspace.trust.enabled',
 		'workbench.enableExperiments',
 		'_extensionsGallery.enablePPE',
-		'security.restrictUNCAccess'
+		'security.restrictUNCAccess',
+		'lowcode.url'
 	];
 
 	private readonly titleBarStyle = new ChangeObserver<'native' | 'custom'>('string');
@@ -56,6 +58,8 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 	private readonly experimentsEnabled = new ChangeObserver('boolean');
 	private readonly enablePPEExtensionsGallery = new ChangeObserver('boolean');
 	private readonly restrictUNCAccess = new ChangeObserver('boolean');
+
+	private readonly lowcodeUrl = new ChangeObserver('string');
 
 	constructor(
 		@IHostService private readonly hostService: IHostService,
@@ -99,6 +103,9 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 			// Update mode
 			processChanged(this.updateMode.handleChange(config.update?.mode));
 
+			//lc
+			processChanged(this.lowcodeUrl.handleChange(config?.locode?.url));
+
 			// On linux turning on accessibility support will also pass this flag to the chrome renderer, thus a restart is required
 			if (isLinux && typeof config.editor?.accessibilitySupport === 'string' && config.editor.accessibilitySupport !== this.accessibilitySupport) {
 				this.accessibilitySupport = config.editor.accessibilitySupport;
@@ -112,6 +119,7 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 
 			// UNC host access restrictions
 			processChanged(this.restrictUNCAccess.handleChange(config?.security?.restrictUNCAccess));
+
 		}
 
 		// Experiments
