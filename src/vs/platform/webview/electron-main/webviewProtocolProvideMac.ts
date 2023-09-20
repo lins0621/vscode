@@ -7,9 +7,24 @@ import { Disposable } from 'vs/base/common/lifecycle';
 import { AppResourcePath, COI, FileAccess, Schemas } from 'vs/base/common/network';
 import { URI } from 'vs/base/common/uri';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
+import { ILCService } from 'vs/platform/lc/electron-main/LCService';
+interface CookiesSetDetails {
+	url: string;
+	name?: string;
+	value?: string;
+	domain?: string;
+	path?: string;
+	secure?: boolean;
+	httpOnly?: boolean;
+	expirationDate?: number;
+	sameSite?: ('unspecified' | 'no_restriction' | 'lax' | 'strict');
+}
 
 //针对低代码，用于解决mac跨域事件问题
 export class WebviewProtocolProviderMac extends Disposable {
+
+	//我相信一个页面里面不会有两个path，写成成员变量
+	private path: string = '/';
 
 	private static validWebviewFilePaths = new Map([
 		['/fake.html', 'fake.html'],
@@ -19,16 +34,36 @@ export class WebviewProtocolProviderMac extends Disposable {
 
 	constructor(
 		@IConfigurationService protected readonly _configurationService: IConfigurationService,
+		@ILCService private readonly lcService: ILCService,
 	) {
 		super();
+
 		const webviewHandler = this.handleWebviewRequest.bind(this);
 		protocol.handle(Schemas.vscodeWebview, webviewHandler);
 	}
 
-	private handleWebviewRequest(
+
+
+	private parseCookie(cookieString: string): CookiesSetDetails {
+		const cookiePairs = cookieString.split(';');
+		const result: CookiesSetDetails = { url: '' };
+		for (let pair of cookiePairs) {
+			pair = pair.trim();
+			const [key, value] = pair.split('=').map(part => part.trim());
+			if (key === 'path') {
+				result[key] = value;
+			} else if (key === 'JSESSIONID') {
+				result.value = pair;
+			}
+		}
+		return result;
+	}
+
+	private async handleWebviewRequest(
 		request: GlobalRequest,
 	) {
 		try {
+
 			const uri = URI.parse(request.url);
 
 			const entry = WebviewProtocolProviderMac.validWebviewFilePaths.get(uri.path);
@@ -56,15 +91,24 @@ export class WebviewProtocolProviderMac extends Disposable {
 				const { origin } = new URL(this._configurationService.getValue('lowcode.url'));
 				const { pathname } = new URL(request.url);
 				const trueUrl = origin + pathname + param;
-				console.log(trueUrl);
+
+				const ses = this.lcService.getWebContents().session;
+
+				const session = (await ses.cookies.get({ path: this.path }));
+				request.headers.append('Cookie', session[0]?.value);
 				const reqInit: RequestInit & { duplex: string } = {
 					method: request.method,
 					headers: request.headers,
 					body: request.body,
-					credentials: 'include',
+					credentials: 'same-origin',
 					duplex: 'half',
+
 				};
-				const response = fetch(trueUrl, reqInit);
+				const response = await fetch(trueUrl, reqInit);
+				if (response.headers.getSetCookie()[0]) {
+					const parseCookie = this.parseCookie(response.headers.getSetCookie()[0]);
+					ses.cookies.set(parseCookie);
+				}
 				return response;
 			}
 
@@ -74,5 +118,13 @@ export class WebviewProtocolProviderMac extends Disposable {
 			});
 			// noop
 		}
+	}
+
+	override dispose(): void {
+		super.dispose();
+		// 先不用清理
+		// this.lcService.getWebContents().session.cookies.get({ path: this.path }).then(cookies => {
+		// 	cookies = [];
+		// });
 	}
 }
