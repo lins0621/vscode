@@ -18,9 +18,15 @@ configurationRegistry.registerConfiguration({
 	properties: {
 		'lowcode.url': {
 			type: 'string',
-			scope: ConfigurationScope.APPLICATION,
-			description: localize('lowcodeurl', "配置低代码设计器地址，默认为https://lc.yinhaiyun.com/lcui-test/lowcode-ui/index.html"),
-			default: 'https://lc.yinhaiyun.com/lcui-test/lowcode-ui',
+			scope: ConfigurationScope.MACHINE,
+			description: localize('lcUi', '配置低代码设计器地址，默认为https://lc.yinhaiyun.com/lcui/lowcode-ui/index.html，如非必要请勿修改'),
+			default: 'https://lc.yinhaiyun.com/lcui/lowcode-ui/index.html',
+		},
+		'lowcode.platform': {
+			type: 'string',
+			scope: ConfigurationScope.MACHINE,
+			description: localize('lcPlatform', '低代码平台地址，默认为https://lc.yinhaiyun.com，如非必要请勿修改'),
+			default: 'https://lc.yinhaiyun.com',
 		}
 	}
 });

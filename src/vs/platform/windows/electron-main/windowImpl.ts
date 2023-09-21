@@ -290,7 +290,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 			// };
 			const codeWin = new BrowserView(options);
 			// Load URL
-			this._win.loadURL('http://192.168.73.169:8080/');
+			this._win.loadURL(this.configurationService.getValue('lowcode.platform'));
 			// this._win.loadURL(FileAccess.asBrowserUri(`vs/code/electron-sandbox/workbench/workbench${this.environmentMainService.isBuilt ? '' : '-dev'}.html`).toString(true));
 
 			this.lcService.bindWindow(this._win, codeWin);
