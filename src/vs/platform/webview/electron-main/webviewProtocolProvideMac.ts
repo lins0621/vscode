@@ -72,7 +72,13 @@ export class WebviewProtocolProviderMac extends Disposable {
 				//如果是系统资源走文件逻辑
 				const relativeResourcePath: AppResourcePath = `vs/workbench/contrib/webview/browser/pre/${entry}`;
 				const url = FileAccess.asFileUri(relativeResourcePath);
-				const response = net.fetch('vscode-file://' + url.fsPath, {
+				let fetchUrl: string = '';
+				if (url.fsPath?.startsWith('/')) {
+					fetchUrl = 'vscode-file://vscode-app' + url.fsPath;
+				} else {
+					fetchUrl = 'vscode-file://vscode-app/' + url.fsPath;
+				}
+				const response = net.fetch(fetchUrl, {
 					headers: {
 						...COI.getHeadersFromQuery(request.url),
 						'Cross-Origin-Resource-Policy': 'cross-origin',
