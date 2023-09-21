@@ -51,7 +51,7 @@ export const tocData: ITOCEntry<string> = {
 				{
 					id: 'ta/lowcode',
 					label: localize('lowcode', '低代码设置'),
-					settings: ['lowcode.url']
+					settings: ['lowcode.*']
 				},
 			]
 		},

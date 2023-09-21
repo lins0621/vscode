@@ -24,7 +24,7 @@ interface CookiesSetDetails {
 export class WebviewProtocolProviderMac extends Disposable {
 
 	//我相信一个页面里面不会有两个path，写成成员变量
-	private path: string = '/';
+	private path: string = '/lowcodeback';
 
 	private static validWebviewFilePaths = new Map([
 		['/fake.html', 'fake.html'],
@@ -42,8 +42,7 @@ export class WebviewProtocolProviderMac extends Disposable {
 		protocol.handle(Schemas.vscodeWebview, webviewHandler);
 	}
 
-
-
+	//@ts-ignore
 	private parseCookie(cookieString: string): CookiesSetDetails {
 		const cookiePairs = cookieString.split(';');
 		const result: CookiesSetDetails = { url: '' };
@@ -98,10 +97,16 @@ export class WebviewProtocolProviderMac extends Disposable {
 				const { pathname } = new URL(request.url);
 				const trueUrl = origin + pathname + param;
 
-				const ses = this.lcService.getWebContents().session;
+				// const ses = this.lcService.getWebContents().session;
 
-				const session = (await ses.cookies.get({ path: this.path }));
-				request.headers.append('Cookie', session[0]?.value);
+				const sesMain = this.lcService.getMainContents()?.session;
+
+				const sessionMain = await sesMain?.cookies.get({ path: this.path });
+				// const session = (await ses.cookies.get({ path: this.path }));
+				// console.log(sessionMain);
+				if (sessionMain && sessionMain[0] && !pathname.endsWith('js|css|jpg')) {
+					request.headers.append('Cookie', sessionMain[0]?.value);
+				}
 				const reqInit: RequestInit & { duplex: string } = {
 					method: request.method,
 					headers: request.headers,
@@ -111,12 +116,12 @@ export class WebviewProtocolProviderMac extends Disposable {
 
 				};
 				const response = await fetch(trueUrl, reqInit);
-				if (response.headers.getSetCookie()[0]) {
-					const parseCookie = this.parseCookie(response.headers.getSetCookie()[0]);
-					parseCookie.url = trueUrl;
-					ses.cookies.set(parseCookie);
-					this.path = parseCookie.path || '';
-				}
+				// if (response.headers.getSetCookie()[0]) {
+				// 	const parseCookie = this.parseCookie(response.headers.getSetCookie()[0]);
+				// 	parseCookie.url = trueUrl;
+				// 	ses.cookies.set(parseCookie);
+				// 	this.path = parseCookie.path || '';
+				// }
 				return response;
 			}
 

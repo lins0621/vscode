@@ -33,6 +33,7 @@ export interface ILCService extends ICommonNativeLCService {
 	dissmissCodeWork(): void;
 
 	getWebContents(): Electron.WebContents;
+	getMainContents(): Electron.WebContents | undefined;
 	initService(mINativeHostMainService: INativeHostMainService, mainProcessElectronServer: ElectronIPCServer): void;
 }
 
@@ -94,13 +95,13 @@ export class LCService implements ILCService {
 				buttonLabel: '选择'
 			}).then(result => {
 				console.log(result)
-				event.sender.send('lc:selectedItem', result.filePaths[0])
-			})
+				event.sender.send('lc:selectedItem', result.filePaths[0]);
+			});
 		});
 
 		// 获取electron运行平台类型
 		ipcMain.on('lc:get-platform', function (event, p) {
-			event.sender.send('lc:electronPlatform', process.platform)
+			event.sender.send('lc:electronPlatform', process.platform);
 		});
 	}
 
@@ -195,6 +196,10 @@ export class LCService implements ILCService {
 
 	getWebContents() {
 		return this.workBV.webContents;
+	}
+
+	getMainContents() {
+		return this.homeBW?.webContents;
 	}
 
 	//下载 git 并打开
