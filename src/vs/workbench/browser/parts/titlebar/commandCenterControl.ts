@@ -41,7 +41,7 @@ export class CommandCenterControl {
 
 		const titleToolbar = instantiationService.createInstance(MenuWorkbenchToolBar, this.element, MenuId.CommandCenter, {
 			contextMenu: MenuId.TitleBarContext,
-			hiddenItemStrategy: HiddenItemStrategy.Ignore,
+			hiddenItemStrategy: HiddenItemStrategy.NoHide,
 			toolbarOptions: {
 				primaryGroup: () => true,
 			},
@@ -184,10 +184,13 @@ class CommandCenterCenterViewItem extends BaseActionViewItem {
 			toolbar.setActions(group);
 			this._store.add(toolbar);
 
+
 			// spacer
 			if (i < groups.length - 1) {
 				const icon = renderIcon(Codicon.circleSmallFilled);
-				icon.classList.add('spacer');
+				icon.style.padding = '0 12px';
+				icon.style.height = '100%';
+				icon.style.opacity = '0.5';
 				container.appendChild(icon);
 			}
 		}
