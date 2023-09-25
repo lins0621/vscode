@@ -24,7 +24,7 @@ interface CookiesSetDetails {
 export class WebviewProtocolProviderMac extends Disposable {
 
 	//我相信一个页面里面不会有两个path，写成成员变量
-	private path: string = '/lowcodeback';
+	private path: string = '/lowcodeback-dev';
 
 	private static validWebviewFilePaths = new Map([
 		['/fake.html', 'fake.html'],
@@ -105,7 +105,7 @@ export class WebviewProtocolProviderMac extends Disposable {
 				// const session = (await ses.cookies.get({ path: this.path }));
 				// console.log(sessionMain);
 				if (sessionMain && sessionMain[0] && !pathname.endsWith('js|css|jpg')) {
-					request.headers.append('Cookie', sessionMain[0]?.value);
+					request.headers.append('Cookie', 'JSESSIONID=' + sessionMain[0]?.value);
 				}
 				const reqInit: RequestInit & { duplex: string } = {
 					method: request.method,
