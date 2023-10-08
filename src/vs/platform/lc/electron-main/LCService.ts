@@ -114,7 +114,7 @@ export class LCService implements ILCService {
 		};
 		if (path) {
 			const paths: string[] = [path];
-			await this.mINativeHostMainService.doOpenPicked(undefined, paths.map(path => ({ folderUri: URI.file(path) })), options);
+			await this.mINativeHostMainService.doOpenPicked(undefined, paths.map(path => ({ workspaceUri: URI.file(path) })), options);
 		} else {
 			this.mINativeHostMainService.pickFolderAndOpen(undefined, options);
 		}
