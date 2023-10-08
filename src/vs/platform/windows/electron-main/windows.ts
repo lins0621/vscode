@@ -138,7 +138,7 @@ export function defaultBrowserWindowOptions(accessor: ServicesAccessor, windowSt
 			...overrides?.webPreferences,
 			sandbox: true
 		},
-		experimentalDarkMode: true
+		experimentalDarkMode: false
 	};
 
 	if (isLinux) {

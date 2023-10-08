@@ -218,6 +218,12 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 					preload: FileAccess.asFileUri('vs/base/parts/sandbox/electron-sandbox/preload.js').fsPath,
 					additionalArguments: [`--vscode-window-config=${this.configObjectUrl.resource.toString()}`],
 					v8CacheOptions: this.environmentMainService.useCodeCache ? 'bypassHeatCheck' : 'none',
+					autoplayPolicy: 'user-gesture-required',
+					// Enable experimental css highlight api https://chromestatus.com/feature/5436441440026624
+					// Refs https://github.com/microsoft/vscode/issues/140098
+					enableBlinkFeatures: 'HighlightAPI',
+					sandbox: true,
+					webSecurity: false,
 				}
 			});
 
@@ -393,15 +399,8 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 		// Eventing
 		this.registerListeners();
-		
-		this.lcService.dismissVSMenuAndShowMyMenu();
-	}
 
-	private logConditionally(msg: string): void {
-		// TODO@bpasero remove me eventually
-		if (this.configurationService.getValue('window.logFullScreenTransitions')) {
-			this.logService.info(`window-fullscreen-bug: ${msg})`);
-		}
+		this.lcService.dismissVSMenuAndShowMyMenu();
 	}
 
 	private logConditionally(msg: string): void {

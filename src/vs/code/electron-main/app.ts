@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { app, BrowserWindow, protocol, session, Session, systemPreferences, WebFrameMain } from 'electron';
+import { app, protocol, session, Session, systemPreferences, WebFrameMain } from 'electron';
 import { addUNCHostToAllowlist, disableUNCAccessRestrictions } from 'vs/base/node/unc';
 import { validatedIpcMain } from 'vs/base/parts/ipc/electron-main/ipcMain';
 import { hostname, release } from 'os';
@@ -1040,7 +1040,6 @@ export class CodeApplication extends Disposable {
 
 		//command
 		// services.set(ICommandService, new SyncDescriptor(CommandService));
-
 
 		// Terminal
 		const ptyHostStarter = new ElectronPtyHostStarter({

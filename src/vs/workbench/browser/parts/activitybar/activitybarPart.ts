@@ -35,8 +35,8 @@ export class ActivitybarPart extends Part {
 
 	private static readonly ACTION_HEIGHT = 48;
 
-	private static readonly GEAR_ICON = registerIcon('settings-view-bar-icon', Codicon.settingsGear, localize('settingsViewBarIcon', "Settings icon in the view bar."));
-	private static readonly ACCOUNTS_ICON = registerIcon('accounts-view-bar-icon', Codicon.account, localize('accountsViewBarIcon', "Accounts icon in the view bar."));
+	static readonly pinnedViewContainersKey = 'workbench.activity.pinnedViewlets2';
+	static readonly placeholderViewContainersKey = 'workbench.activity.placeholderViewlets';
 
 	//#region IView
 
