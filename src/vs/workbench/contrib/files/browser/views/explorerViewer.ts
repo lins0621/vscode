@@ -66,6 +66,12 @@ import { IHoverDelegate, IHoverDelegateOptions, IHoverWidget } from 'vs/base/bro
 import { IHoverService } from 'vs/workbench/services/hover/browser/hover';
 import { HoverPosition } from 'vs/base/browser/ui/hover/hoverWidget';
 import { IFilesConfigurationService } from 'vs/workbench/services/filesConfiguration/common/filesConfigurationService';
+// lowcode add
+import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
+import { Action } from 'vs/base/common/actions';
+import { Codicon } from 'vs/base/common/codicons';
+import { ThemeIcon } from 'vs/base/common/themables';
+import { ICommandService } from 'vs/platform/commands/common/commands';
 
 export class ExplorerDelegate implements IListVirtualDelegate<ExplorerItem> {
 
@@ -362,7 +368,8 @@ export class FilesRenderer implements ICompressibleTreeRenderer<ExplorerItem, Fu
 		@ILabelService private readonly labelService: ILabelService,
 		@IWorkspaceContextService private readonly contextService: IWorkspaceContextService,
 		@IContextMenuService private readonly contextMenuService: IContextMenuService,
-		@IHoverService private readonly hoverService: IHoverService
+		@IHoverService private readonly hoverService: IHoverService,
+		@ICommandService private readonly commandService: ICommandService
 	) {
 		this.config = this.configurationService.getValue<IFilesConfiguration>();
 
@@ -410,6 +417,38 @@ export class FilesRenderer implements ICompressibleTreeRenderer<ExplorerItem, Fu
 		return templateData;
 	}
 
+	private vueEditAction(uri: URI): void {
+		this.commandService.executeCommand('extension.openLowcodePage', uri);
+	}
+
+	private isVueFile(stat: any): boolean {
+		return !(stat.isDirectory) && stat.name.endsWith('.vue');
+	}
+
+	private renderItemActions(element: HTMLElement, stat: any): void {
+		const oldBar = element.querySelector('.monaco-action-bar')
+		if (oldBar) {
+			oldBar.remove()
+		}
+
+		if (!this.isVueFile(stat)) {
+			return
+		}
+
+		if (element.querySelector('.monaco-action-bar') == null) {
+			element.style.display = 'flex';
+			element.style.paddingRight = '16px';
+
+			const actionBar = new ActionBar(element);
+
+			const action = new Action('edit', undefined, ThemeIcon.asClassName(Codicon.edit), true, () => { this.vueEditAction(stat.resource) });
+			action.tooltip = '低代码开发';
+			actionBar.push(action, {
+				icon: true
+			});
+		}
+	}
+
 	renderElement(node: ITreeNode<ExplorerItem, FuzzyScore>, index: number, templateData: IFileTemplateData): void {
 		const stat = node.element;
 		templateData.currentContext = stat;
@@ -422,6 +461,9 @@ export class FilesRenderer implements ICompressibleTreeRenderer<ExplorerItem, Fu
 		if (!editableData) {
 			templateData.label.element.style.display = 'flex';
 			this.renderStat(stat, stat.name, undefined, node.filterData, templateData);
+
+			// lowcode special icon
+			this.renderItemActions(templateData.label.element, stat)
 		}
 
 		// Input Box
